@@ -1,3 +1,20 @@
 spring:
   application:
     name: vehiclesphere
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/vehiclesphere
+    username: tejasvi
+    password: Tejasvi@786
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+
+server:
+  port: 8080
