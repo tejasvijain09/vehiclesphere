@@ -1,7 +1,6 @@
 package com.vehiclesphere.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
+import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -19,4 +18,8 @@ public class RefreshToken extends BaseEntity{
 
     private LocalDateTime expiryDate;
     private boolean revoked;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
 }

@@ -1,8 +1,7 @@
 package com.vehiclesphere.entity;
 
 import com.vehiclesphere.enums.NotificationType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
+import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
@@ -20,4 +19,8 @@ public class Notification extends BaseEntity{
 
     private NotificationType type;
     private boolean read;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
 }

@@ -1,8 +1,10 @@
 package com.vehiclesphere.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
+import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
@@ -25,4 +27,20 @@ public class User extends BaseEntity{
     private boolean active;
     private boolean emailVerified;
     private String profileImageUrl;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "role_id")
+    private Role role;
+
+    @OneToMany(mappedBy = "user")
+    private List<Booking> bookings = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user")
+    private List<Review> reviews = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private List<Notification> notifications = new ArrayList<>();
+
+    @OneToOne(mappedBy = "user",cascade = CascadeType.ALL)
+    private RefreshToken refreshToken;
 }

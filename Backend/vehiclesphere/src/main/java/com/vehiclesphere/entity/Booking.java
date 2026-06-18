@@ -1,7 +1,7 @@
 package com.vehiclesphere.entity;
 
 import com.vehiclesphere.enums.BookingStatus;
-import jakarta.persistence.Entity;
+import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -23,4 +23,15 @@ public class Booking extends BaseEntity{
     private Integer totalDays;
     private BigDecimal totalAmount;
     private BookingStatus status;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "vehicle_id")
+    private Vehicle vehicle;
+
+    @OneToOne(mappedBy = "booking",cascade = CascadeType.ALL)
+    private Payment payment;
 }

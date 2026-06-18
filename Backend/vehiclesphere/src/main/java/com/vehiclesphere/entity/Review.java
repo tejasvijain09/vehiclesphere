@@ -1,7 +1,6 @@
 package com.vehiclesphere.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
+import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
@@ -16,4 +15,12 @@ public class Review extends BaseEntity{
 
     @Column(length = 1000)
     private String comment;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "vehicle_id")
+    private Vehicle vehicle;
 }
