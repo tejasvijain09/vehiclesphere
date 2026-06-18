@@ -1,0 +1,26 @@
+package com.vehiclesphere.entity;
+
+import com.vehiclesphere.enums.BookingStatus;
+import jakarta.persistence.Entity;
+import lombok.*;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+@Entity
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class Booking extends BaseEntity{
+
+    private LocalDate startDate;
+    private LocalDate endDate;
+    private String pickupLocation;
+    private String dropLocation;
+    private Integer totalDays;
+    private BigDecimal totalAmount;
+    private BookingStatus status;
+}
