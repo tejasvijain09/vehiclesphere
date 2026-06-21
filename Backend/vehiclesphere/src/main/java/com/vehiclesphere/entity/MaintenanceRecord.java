@@ -1,9 +1,6 @@
 package com.vehiclesphere.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -15,6 +12,8 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+
+@Table(name = "maintenance_records")
 public class MaintenanceRecord extends BaseEntity{
 
     private String description;

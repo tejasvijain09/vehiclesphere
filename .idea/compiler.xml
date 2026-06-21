@@ -2,14 +2,10 @@
 <project version="4">
   <component name="CompilerConfiguration">
     <annotationProcessing>
+      <profile default="true" name="Default" enabled="true" />
       <profile name="Maven default annotation processors profile" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
-        <outputRelativeToContentRoot value="true" />
-      </profile>
-      <profile name="Annotation profile for vehiclesphere" enabled="true">
-        <sourceOutputDir name="../../Backend/vehiclesphere/target/generated-sources/annotations" />
-        <sourceTestOutputDir name="../../Backend/vehiclesphere/target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="vehiclesphere" />
       </profile>

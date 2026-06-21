@@ -1,6 +1,7 @@
 package com.vehiclesphere.dto.request.vehicle;
 
 import com.vehiclesphere.enums.VehicleStatus;
+import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -15,7 +16,10 @@ public class UpdateVehicleRequest {
     private String color;
     private String city;
     private String location;
+
+    @Positive
     private BigDecimal pricePerDay;
+
     private VehicleStatus status;
     private String description;
 }

@@ -2,10 +2,7 @@ package com.vehiclesphere.entity;
 
 import com.vehiclesphere.enums.PaymentMethod;
 import com.vehiclesphere.enums.PaymentStatus;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToOne;
+import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -17,6 +14,8 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+
+@Table(name = "payments")
 public class Payment extends BaseEntity{
 
     private BigDecimal amount;

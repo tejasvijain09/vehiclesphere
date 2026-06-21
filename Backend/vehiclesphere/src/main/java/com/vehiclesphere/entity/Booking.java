@@ -14,6 +14,8 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+
+@Table(name = "bookings")
 public class Booking extends BaseEntity{
 
     private LocalDate startDate;

@@ -10,6 +10,8 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+
+@Table(name = "notifications")
 public class Notification extends BaseEntity{
 
     private String title;

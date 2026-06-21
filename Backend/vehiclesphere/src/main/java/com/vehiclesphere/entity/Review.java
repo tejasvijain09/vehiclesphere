@@ -9,6 +9,8 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+
+@Table(name = "reviews")
 public class Review extends BaseEntity{
 
     private Integer rating;

@@ -16,6 +16,8 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+
+@Table(name = "vehicles")
 public class Vehicle extends BaseEntity{
 
     private String registrationNumber;
