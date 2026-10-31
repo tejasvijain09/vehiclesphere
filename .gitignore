@@ -1,0 +1,31 @@
+# === Backend ===
+backend/target/
+backend/.mvn/
+backend/*.iml
+backend/.idea/
+backend/*.class
+backend/*.jar
+backend/*.war
+
+# === Frontend ===
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.local
+
+# === General ===
+.env
+.DS_Store
+*.log
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+*.iml
+
+# === Database ===
+database/data/
+
+# === OS ===
+Thumbs.db

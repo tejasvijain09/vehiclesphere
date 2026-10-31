@@ -1,121 +1,50 @@
-# VehicleSphere - System Architecture
+# VehicleSphere — Architecture Overview
 
-# Architecture Style
-Monolithic Full-Stack Application
+## 1. System Architecture
 
----
+VehicleSphere is designed as a **Modular Monolith** using Spring Boot 3 on the backend and React 18 on the frontend. It follows a clean layered pattern:
 
-# High Level Architecture
+```
+[ Frontend: React + Vite + Tailwind CSS ]
+                   │
+                   ▼ (REST API / JSON over HTTP)
+[ Spring Boot 3 Backend / Security Filters (JWT) ]
+                   │
+                   ▼
+┌────────────────────────────────────────────────────────┐
+│                   Controllers Layer                   │
+├────────────────────────────────────────────────────────┤
+│                    Services Layer                      │
+│ (Business logic, validation, price calculation)        │
+├────────────────────────────────────────────────────────┤
+│                  Repositories Layer                    │
+│   (Spring Data JPA / Hibernate ORM / Criteria)         │
+└────────────────────────────────────────────────────────┘
+                   │
+                   ▼
+       [ PostgreSQL Database ]
+```
 
-Frontend (React)
-↓
-REST APIs
-↓
-Spring Boot Backend
-↓
-Hibernate / Spring Data JPA
-↓
-PostgreSQL Database
+## 2. Package Organization
 
-Additional Components:
-- Redis Cache
-- Spring Security
-- Spring Actuator
-- Docker
+```
+com.vehiclesphere
+├── config        # Security, CORS, OpenAPI Swagger, and Data Seeder
+├── security      # JWT token provider, filter, and user details service
+├── auth          # Registration, login authentication & DTOs
+├── user          # User entity, repository, service, customer directory
+├── vehicle       # Vehicle catalog, categories, availability management
+├── booking       # Rental calculations, conflict checks, lifecycle workflows
+├── category      # Vehicle category classification
+├── dashboard     # Aggregated operational and customer metrics
+└── exception     # Global REST exception handling and error responses
+```
 
----
+## 3. Security Design
 
-# Backend Layers
-
-Controller Layer
-↓
-Service Layer
-↓
-Repository Layer
-↓
-Database
-
----
-
-# Design Patterns
-
-## Layered Architecture
-Controller → Service → Repository
-
-## DTO Pattern
-Used for request and response objects.
-
-## Builder Pattern
-Used for creating DTOs and entities.
-
-## Factory Pattern
-Used for payment and notification creation.
-
-## Strategy Pattern
-Used for rental pricing calculations.
-
-## Specification Pattern
-Used for dynamic searching and filtering.
-
----
-
-# Modules
-
-1. Authentication Module
-2. User Management Module
-3. Vehicle Management Module
-4. Search Module
-5. Booking Module
-6. Payment Module
-7. Review Module
-8. Notification Module
-9. Dashboard Module
-10. Admin Module
-
----
-
-# Security
-
-Authentication:
-JWT
-
-Authorization:
-Role-Based Access Control
-
-Roles:
-- CUSTOMER
-- FLEET_MANAGER
-- ADMIN
-
----
-
-# Caching Strategy
-
-Redis:
-- Popular vehicles
-- Dashboard statistics
-- Vehicle search results
-
----
-
-# Monitoring
-
-- Spring Actuator
-- Logging
-- Exception Handling
-
----
-
-# Deployment
-
-Frontend:
-React
-
-Backend:
-Spring Boot
-
-Database:
-PostgreSQL
-
-Containerization:
-Docker Compose
+- **Stateless Authentication**: Uses HMAC-SHA signed JSON Web Tokens (JWT) with configurable secret and expiration.
+- **Password Security**: Passwords are cryptographically salted and hashed using BCrypt.
+- **Role-Based Access Control (RBAC)**:
+  - `CUSTOMER`: Can browse vehicles, calculate quotes, submit booking requests, manage their own reservations, and update profile.
+  - `ADMIN`: Has full administrative privilege to manage vehicles, approve/reject bookings, mark rentals active/completed, and inspect system telemetry.
+- **Authorization Enforcement**: Dual-layer defense with Spring Security `SecurityFilterChain` rules and method-level `@PreAuthorize("hasRole('ADMIN')")`.
