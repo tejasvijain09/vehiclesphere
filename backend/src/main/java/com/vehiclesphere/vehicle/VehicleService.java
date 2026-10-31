@@ -41,12 +41,22 @@ public class VehicleService {
             List<Predicate> predicates = new ArrayList<>();
 
             if (StringUtils.hasText(search)) {
-                String pattern = "%" + search.toLowerCase().trim() + "%";
-                predicates.add(cb.or(
-                        cb.like(cb.lower(root.get("name")), pattern),
-                        cb.like(cb.lower(root.get("brand")), pattern),
-                        cb.like(cb.lower(root.get("model")), pattern)
-                ));
+                String trimmed = search.trim().toLowerCase();
+                String[] tokens = trimmed.split("\\s+");
+                for (String token : tokens) {
+                    if (!token.isBlank()) {
+                        String pattern = "%" + token + "%";
+                        predicates.add(cb.or(
+                                cb.like(cb.lower(root.get("name")), pattern),
+                                cb.like(cb.lower(root.get("brand")), pattern),
+                                cb.like(cb.lower(root.get("model")), pattern),
+                                cb.like(cb.lower(root.get("location")), pattern),
+                                cb.like(cb.lower(root.get("description")), pattern),
+                                cb.like(cb.lower(root.get("registrationNumber")), pattern),
+                                cb.like(cb.lower(root.get("category").get("name")), pattern)
+                        ));
+                    }
+                }
             }
 
             if (categoryId != null) {

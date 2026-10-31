@@ -21,6 +21,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.awt.Color;
 import java.io.ByteArrayOutputStream;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
@@ -80,7 +82,9 @@ public class InvoiceService {
             leftHeader.setBorder(Rectangle.NO_BORDER);
             leftHeader.addElement(new Paragraph("VehicleSphere", brandFont));
             leftHeader.addElement(new Paragraph("Premium Wedding & Event Vehicle Rentals", brandSubFont));
-            leftHeader.addElement(new Paragraph("Lovely Professional University, Punjab &bull; tejasvijain09@gmail.com", smallFont));
+            leftHeader.addElement(new Paragraph("GSTIN: 03AAAAA0000A1Z5 | SAC: 996601", smallFont));
+            leftHeader.addElement(new Paragraph("Jalandhar-Delhi G.T. Road, Phagwara, Punjab 144411", smallFont));
+            leftHeader.addElement(new Paragraph("Contact: +91 98765 43210 | support@vehiclesphere.com", smallFont));
             headerTable.addCell(leftHeader);
 
             PdfPCell rightHeader = new PdfPCell();
@@ -189,24 +193,52 @@ public class InvoiceService {
             document.add(itemsTable);
             document.add(new Paragraph(" "));
 
-            // 4. Summary & Grand Total
+            // 4. Summary & Grand Total (with Indian GST breakdown)
+            BigDecimal total = booking.getTotalAmount() != null ? booking.getTotalAmount() : BigDecimal.ZERO;
+            BigDecimal subtotal = total.divide(BigDecimal.valueOf(1.18), 2, RoundingMode.HALF_UP);
+            BigDecimal totalGst = total.subtract(subtotal);
+            BigDecimal cgst = totalGst.divide(BigDecimal.valueOf(2), 2, RoundingMode.HALF_UP);
+            BigDecimal sgst = totalGst.subtract(cgst);
+
             PdfPTable summaryTable = new PdfPTable(2);
             summaryTable.setWidthPercentage(100);
-            summaryTable.setWidths(new float[]{60, 40});
+            summaryTable.setWidths(new float[]{50, 50});
 
             PdfPCell notesCell = new PdfPCell();
             notesCell.setBorder(Rectangle.NO_BORDER);
-            notesCell.addElement(new Paragraph("Special Wedding Notes:", boldFont));
+            notesCell.addElement(new Paragraph("Special Wedding Notes & Inclusions:", boldFont));
             notesCell.addElement(new Paragraph(booking.getNotes() != null && !booking.getNotes().isBlank() ?
-                    booking.getNotes() : "Vehicle sanitized, floral-bonnet preparation ready upon delivery.", smallFont));
+                    booking.getNotes() : "Vehicle sanitized, ribbon & floral-bonnet preparation included on delivery.", smallFont));
+            notesCell.addElement(new Paragraph(" "));
+            notesCell.addElement(new Paragraph("Payment Terms: Full payment required prior to dispatch. Fuel included as per rental package.", smallFont));
             summaryTable.addCell(notesCell);
 
             PdfPCell totalSummaryCell = new PdfPCell();
             totalSummaryCell.setBorder(Rectangle.NO_BORDER);
-            Paragraph grandTotal = new Paragraph("Grand Total: INR " + String.format("%,.2f", booking.getTotalAmount()),
-                    FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14, navyPrimary));
-            grandTotal.setAlignment(Element.ALIGN_RIGHT);
-            totalSummaryCell.addElement(grandTotal);
+
+            PdfPTable calcTable = new PdfPTable(2);
+            calcTable.setWidthPercentage(100);
+            calcTable.setWidths(new float[]{60, 40});
+
+            addSummaryRow(calcTable, "Taxable Subtotal:", "INR " + String.format("%,.2f", subtotal), normalFont);
+            addSummaryRow(calcTable, "CGST (9.0%):", "INR " + String.format("%,.2f", cgst), smallFont);
+            addSummaryRow(calcTable, "SGST (9.0%):", "INR " + String.format("%,.2f", sgst), smallFont);
+            addSummaryRow(calcTable, "Total GST (18.0%):", "INR " + String.format("%,.2f", totalGst), smallFont);
+
+            PdfPCell grandTotalLabel = new PdfPCell(new Phrase("Grand Total:", FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, navyPrimary)));
+            grandTotalLabel.setBorder(Rectangle.TOP);
+            grandTotalLabel.setBorderColor(new Color(203, 213, 225));
+            grandTotalLabel.setPaddingTop(6);
+            calcTable.addCell(grandTotalLabel);
+
+            PdfPCell grandTotalVal = new PdfPCell(new Phrase("INR " + String.format("%,.2f", total), FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, navyPrimary)));
+            grandTotalVal.setBorder(Rectangle.TOP);
+            grandTotalVal.setBorderColor(new Color(203, 213, 225));
+            grandTotalVal.setHorizontalAlignment(Element.ALIGN_RIGHT);
+            grandTotalVal.setPaddingTop(6);
+            calcTable.addCell(grandTotalVal);
+
+            totalSummaryCell.addElement(calcTable);
             summaryTable.addCell(totalSummaryCell);
 
             document.add(summaryTable);
@@ -224,5 +256,18 @@ public class InvoiceService {
             log.error("Failed to generate PDF invoice for booking " + bookingId, e);
             throw new RuntimeException("Error generating PDF rental invoice: " + e.getMessage());
         }
+    }
+
+    private void addSummaryRow(PdfPTable table, String label, String value, Font font) {
+        PdfPCell lCell = new PdfPCell(new Phrase(label, font));
+        lCell.setBorder(Rectangle.NO_BORDER);
+        lCell.setPaddingBottom(3);
+        table.addCell(lCell);
+
+        PdfPCell vCell = new PdfPCell(new Phrase(value, font));
+        vCell.setBorder(Rectangle.NO_BORDER);
+        vCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        vCell.setPaddingBottom(3);
+        table.addCell(vCell);
     }
 }

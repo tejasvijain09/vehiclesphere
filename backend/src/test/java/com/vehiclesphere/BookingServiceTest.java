@@ -164,4 +164,23 @@ class BookingServiceTest {
 
         assertThrows(BadRequestException.class, () -> bookingService.createBooking(1L, request));
     }
+
+    @Test
+    void testCreateBooking_PastPickupDate_ThrowsBadRequestException() {
+        LocalDate pickup = LocalDate.now().minusDays(1);
+        LocalDate returnDate = LocalDate.now().plusDays(2);
+
+        CreateBookingRequest request = CreateBookingRequest.builder()
+                .vehicleId(10L)
+                .pickupDate(pickup)
+                .returnDate(returnDate)
+                .pickupLocation("City Airport")
+                .build();
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(sampleUser));
+        when(vehicleRepository.findById(10L)).thenReturn(Optional.of(sampleVehicle));
+
+        BadRequestException ex = assertThrows(BadRequestException.class, () -> bookingService.createBooking(1L, request));
+        assertTrue(ex.getMessage().contains("past"));
+    }
 }

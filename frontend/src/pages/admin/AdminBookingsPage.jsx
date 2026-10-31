@@ -75,8 +75,14 @@ export default function AdminBookingsPage() {
       link.download = `VehicleSphere-Invoice-${booking.bookingReference}.pdf`;
       document.body.appendChild(link);
       link.click();
-      link.remove();
-      window.URL.revokeObjectURL(downloadUrl);
+      setTimeout(() => {
+        link.remove();
+        window.URL.revokeObjectURL(downloadUrl);
+      }, 3000);
+      setToast({
+        type: 'success',
+        message: `Tax invoice for booking ${booking.bookingReference} downloaded successfully.`,
+      });
     } catch (err) {
       setToast({
         type: 'error',

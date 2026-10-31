@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { 
@@ -22,6 +22,7 @@ import {
 export default function VehicleDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
 
   const [vehicle, setVehicle] = useState(null);
@@ -34,14 +35,30 @@ export default function VehicleDetailPage() {
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [wishlistLoading, setWishlistLoading] = useState(false);
 
+  // Helper for local YYYY-MM-DD
+  const formatLocalDate = (d = new Date()) => {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const getTomorrowLocalDate = (base = new Date()) => {
+    const next = new Date(base);
+    next.setDate(next.getDate() + 1);
+    return formatLocalDate(next);
+  };
+
+  const todayStr = formatLocalDate(new Date());
+  const tomorrowStr = getTomorrowLocalDate(new Date());
+
+  const draft = location.state?.bookingDraft;
+
   // Booking Form State
-  const today = new Date().toISOString().split('T')[0];
-  const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
-  
-  const [pickupDate, setPickupDate] = useState(today);
-  const [returnDate, setReturnDate] = useState(tomorrow);
-  const [pickupLocation, setPickupLocation] = useState('');
-  const [notes, setNotes] = useState('');
+  const [pickupDate, setPickupDate] = useState(draft?.pickupDate || todayStr);
+  const [returnDate, setReturnDate] = useState(draft?.returnDate || tomorrowStr);
+  const [pickupLocation, setPickupLocation] = useState(draft?.pickupLocation || '');
+  const [notes, setNotes] = useState(draft?.notes || '');
   
   // Real-time calculation state
   const [calculation, setCalculation] = useState(null);
@@ -55,7 +72,9 @@ export default function VehicleDetailPage() {
       try {
         const res = await api.get(`/vehicles/${id}`);
         setVehicle(res.data);
-        setPickupLocation(res.data.location || '');
+        if (!draft?.pickupLocation) {
+          setPickupLocation(res.data.location || '');
+        }
       } catch (err) {
         setError('Vehicle not found or failed to load.');
       } finally {
@@ -134,12 +153,32 @@ export default function VehicleDetailPage() {
     calcPrice();
   }, [vehicle, pickupDate, returnDate]);
 
+  const handlePickupDateChange = (e) => {
+    const val = e.target.value;
+    setPickupDate(val);
+    if (!returnDate || returnDate <= val) {
+      const p = new Date(val);
+      p.setDate(p.getDate() + 1);
+      setReturnDate(formatLocalDate(p));
+    }
+  };
+
   const handleBookingSubmit = async (e) => {
     e.preventDefault();
     setBookingError(null);
 
     if (!user) {
-      navigate('/login', { state: { from: `/vehicles/${id}` } });
+      navigate('/login', {
+        state: {
+          from: `/vehicles/${id}`,
+          bookingDraft: {
+            pickupDate,
+            returnDate,
+            pickupLocation,
+            notes,
+          },
+        },
+      });
       return;
     }
 
@@ -516,6 +555,31 @@ export default function VehicleDetailPage() {
                 <p className="text-xs text-slate-500 leading-relaxed">
                   Your reservation reference is <strong className="text-slate-800 font-mono">{bookingSuccess.bookingReference}</strong>. Our fleet administrator has received your wedding vehicle request.
                 </p>
+
+                {/* Booking Confirmation Summary */}
+                <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 text-xs space-y-2 text-left">
+                  <div className="flex justify-between text-slate-600">
+                    <span>Pickup Date:</span>
+                    <span className="font-bold text-slate-900">{bookingSuccess.pickupDate}</span>
+                  </div>
+                  <div className="flex justify-between text-slate-600">
+                    <span>Return Date:</span>
+                    <span className="font-bold text-slate-900">{bookingSuccess.returnDate}</span>
+                  </div>
+                  <div className="flex justify-between text-slate-600">
+                    <span>Rental Duration:</span>
+                    <span className="font-bold text-slate-900">{bookingSuccess.numberOfDays} Day{bookingSuccess.numberOfDays > 1 ? 's' : ''}</span>
+                  </div>
+                  <div className="flex justify-between text-slate-600">
+                    <span>Delivery Venue:</span>
+                    <span className="font-medium text-slate-900 truncate max-w-[180px]">{bookingSuccess.pickupLocation}</span>
+                  </div>
+                  <div className="pt-2 border-t border-slate-200 flex justify-between font-bold text-slate-900">
+                    <span>Total Cost:</span>
+                    <span className="text-blue-700 text-sm font-extrabold">₹ {Number(bookingSuccess.totalAmount).toLocaleString('en-IN')}</span>
+                  </div>
+                </div>
+
                 <div className="pt-2 flex flex-col gap-2">
                   <Link
                     to="/my-bookings"
@@ -543,26 +607,30 @@ export default function VehicleDetailPage() {
                 )}
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">
+                  <label htmlFor="pickupDate" className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">
                     Pickup Date
                   </label>
                   <input
+                    id="pickupDate"
+                    name="pickupDate"
                     type="date"
-                    min={today}
+                    min={todayStr}
                     value={pickupDate}
-                    onChange={(e) => setPickupDate(e.target.value)}
+                    onChange={handlePickupDateChange}
                     required
                     className="w-full px-3 py-2.5 text-xs font-medium rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 bg-slate-50"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">
+                  <label htmlFor="returnDate" className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">
                     Return Date
                   </label>
                   <input
+                    id="returnDate"
+                    name="returnDate"
                     type="date"
-                    min={pickupDate || today}
+                    min={pickupDate || todayStr}
                     value={returnDate}
                     onChange={(e) => setReturnDate(e.target.value)}
                     required
@@ -571,10 +639,12 @@ export default function VehicleDetailPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">
+                  <label htmlFor="pickupLocation" className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">
                     Venue or City Address
                   </label>
                   <input
+                    id="pickupLocation"
+                    name="pickupLocation"
                     type="text"
                     value={pickupLocation}
                     onChange={(e) => setPickupLocation(e.target.value)}
@@ -585,10 +655,12 @@ export default function VehicleDetailPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">
+                  <label htmlFor="notes" className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">
                     Celebration Notes (Optional)
                   </label>
                   <textarea
+                    id="notes"
+                    name="notes"
                     rows={2}
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}

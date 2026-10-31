@@ -13,7 +13,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const from = location.state?.from?.pathname || '/dashboard';
+  const from = location.state?.from?.pathname || location.state?.from || '/dashboard';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -25,7 +25,7 @@ export default function LoginPage() {
       if (user.role === 'ADMIN') {
         navigate('/admin/dashboard', { replace: true });
       } else {
-        navigate(from, { replace: true });
+        navigate(from, { replace: true, state: { bookingDraft: location.state?.bookingDraft } });
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Invalid email or password.');
@@ -71,14 +71,16 @@ export default function LoginPage() {
             >
               <p className="font-bold text-[11px]">Admin Demo</p>
               <p className="text-[10px] text-slate-500 truncate">admin@vehiclesphere.com</p>
+              <p className="text-[10px] text-blue-700 font-mono mt-0.5">Password: Admin@123</p>
             </button>
             <button
               type="button"
               onClick={() => handleQuickFill('gurpreet.singh@example.com', 'Customer@123')}
               className="py-1.5 px-2 bg-white hover:bg-blue-100 text-blue-800 rounded-xl text-xs font-semibold border border-blue-200 transition text-left"
             >
-              <p className="font-bold text-[11px]">Customer (Gurpreet Singh)</p>
+              <p className="font-bold text-[11px]">Customer Demo</p>
               <p className="text-[10px] text-slate-500 truncate">gurpreet.singh@example.com</p>
+              <p className="text-[10px] text-blue-700 font-mono mt-0.5">Password: Customer@123</p>
             </button>
           </div>
         </div>

@@ -98,13 +98,18 @@ export default function MyBookingsPage() {
       const sdkReady = await loadRazorpayScript();
       if (sdkReady && window.Razorpay && !res.data.orderId.startsWith('order_test_')) {
         const options = {
-          key: res.data.razorpayKeyId,
-          amount: res.data.amount,
+          key: res.data.keyId || res.data.razorpayKeyId,
+          amount: res.data.amountInPaise || res.data.amount,
           currency: res.data.currency || 'INR',
           name: 'VehicleSphere Luxury Rentals',
           description: `Booking #${res.data.bookingReference}`,
           image: '/images/vehicles/defender.jpg',
           order_id: res.data.orderId,
+          prefill: {
+            name: res.data.customerName || '',
+            email: res.data.customerEmail || '',
+            contact: res.data.customerPhone || '',
+          },
           handler: async function (response) {
             await verifyPayment(
               booking.id,
@@ -121,7 +126,7 @@ export default function MyBookingsPage() {
         rzpInstance.on('payment.failed', function (resp) {
           setNotification({
             type: 'error',
-            message: `Payment failed: ${resp.error.description || 'Transaction declined'}`,
+            message: `Payment failed: ${resp.error?.description || 'Transaction declined'}`,
           });
           setPayModalBooking(null);
         });
@@ -179,8 +184,14 @@ export default function MyBookingsPage() {
       link.download = `VehicleSphere-Invoice-${booking.bookingReference}.pdf`;
       document.body.appendChild(link);
       link.click();
-      link.remove();
-      window.URL.revokeObjectURL(downloadUrl);
+      setTimeout(() => {
+        link.remove();
+        window.URL.revokeObjectURL(downloadUrl);
+      }, 3000);
+      setNotification({
+        type: 'success',
+        message: `Tax invoice for booking ${booking.bookingReference} downloaded successfully.`,
+      });
     } catch (err) {
       setNotification({
         type: 'error',
@@ -495,14 +506,7 @@ export default function MyBookingsPage() {
               </span>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 pt-2">
-              <button
-                type="button"
-                onClick={() => setPayModalBooking(null)}
-                className="py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition"
-              >
-                Cancel
-              </button>
+            <div className="space-y-2 pt-2">
               <button
                 type="button"
                 disabled={payLoading}
@@ -515,17 +519,50 @@ export default function MyBookingsPage() {
                     'mock_sig_' + fakePaymentId
                   );
                 }}
-                className="py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs transition shadow-md shadow-blue-500/20 flex items-center justify-center gap-1.5"
+                className="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition shadow-md shadow-emerald-500/20 flex items-center justify-center gap-1.5"
               >
                 {payLoading ? (
                   <span className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span>
                 ) : (
                   <>
                     <CreditCard className="w-4 h-4" />
-                    <span>Authorize & Pay</span>
+                    <span>Simulate Payment Success (Authorize ₹ {Number(payModalBooking.totalAmount).toLocaleString('en-IN')})</span>
                   </>
                 )}
               </button>
+
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  disabled={payLoading}
+                  onClick={() => {
+                    setNotification({
+                      type: 'error',
+                      message: 'Payment simulation declined: Issuing bank declined the test transaction (ERROR: INSUFFICIENT_FUNDS_OR_LIMIT).',
+                    });
+                    setPayModalBooking(null);
+                    setOrderData(null);
+                  }}
+                  className="py-2 px-3 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold rounded-xl text-xs border border-rose-200 transition text-center"
+                >
+                  Simulate Bank Failure
+                </button>
+                <button
+                  type="button"
+                  disabled={payLoading}
+                  onClick={() => {
+                    setNotification({
+                      type: 'error',
+                      message: 'Payment was cancelled by the user. Reservation remains pending payment.',
+                    });
+                    setPayModalBooking(null);
+                    setOrderData(null);
+                  }}
+                  className="py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition text-center"
+                >
+                  Cancel Payment
+                </button>
+              </div>
             </div>
           </div>
         </div>

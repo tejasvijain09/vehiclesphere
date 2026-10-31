@@ -10,6 +10,7 @@
 ## 🚀 Live Demo Quick Reference
 
 - **Frontend Application:** [http://localhost:5173](http://localhost:5173)
+- **Admin Portal (Auto-Redirects):** [http://localhost:5173/admin](http://localhost:5173/admin) ➔ `/admin/dashboard`
 - **Backend REST API:** [http://localhost:8080](http://localhost:8080)
 - **Interactive Swagger UI:** [http://localhost:8080/swagger-ui/index.html](http://localhost:8080/swagger-ui/index.html)
 - **OpenAPI 3 JSON Schema:** [http://localhost:8080/v3/api-docs](http://localhost:8080/v3/api-docs)
@@ -33,12 +34,18 @@ The application automatically seeds realistic demo data on initial startup. For 
 - **Backend Order Creation:** Securely calculates payable amounts in paise on the backend (`totalAmount * 100`) and generates orders using the Razorpay Java SDK.
 - **HMAC-SHA256 Signature Verification:** Verifies payment authenticity via cryptographic signature checks before marking records as `PAID`. Never trusts untrusted frontend reports.
 - **Duplicate Payment Prevention:** Rejects duplicate payment attempts for already settled bookings.
-- **Built-in Test Mode Simulation:** Seamlessly operates in test mode even when external keys are unconfigured, allowing examiners to verify end-to-end checkout.
+- **Built-in Test Mode Simulation:** Seamlessly operates in test mode even when external keys are unconfigured, allowing examiners to test both payment success and cancellation/failure simulations.
+- **Razorpay Standard Test Cards:**
+  - Card Number: `4012 0000 0000 0002`
+  - Expiry: Any future date (e.g. `12/28`)
+  - CVV: `123`
+  - OTP: `123456`
 - **Payment History:** Complete customer transaction ledger displaying Order IDs, Payment IDs, timestamps, and status badges.
 
-### 2. 📄 Downloadable PDF Rental Tax Invoice
+### 2. 📄 Downloadable PDF GST Rental Tax Invoice
 - **Automated OpenPDF Engine:** Dynamically generates GST-compliant vehicle rental tax invoices.
-- **Branded & Secured:** Includes VehicleSphere branding, customer GST details, booking reference, rental dates, daily rates, calculated totals, and transaction references.
+- **Indian GST Breakdown:** Includes Company GSTIN (`03AAAAA0000A1Z5`), SAC Code (`996601`), Taxable Subtotal, CGST (9.0%), SGST (9.0%), Total GST (18.0%), and Grand Total.
+- **Branded & Secured:** Includes VehicleSphere branding, customer details, booking reference, rental dates, daily rates, calculated totals, and transaction references.
 - **Access Control:** Customers can only download invoices for their own reservations; administrators can download for any reservation.
 
 ### 3. ⭐ Customer Reviews & Ratings System
