@@ -12,7 +12,11 @@ import {
   AlertCircle,
   ArrowLeft,
   Sparkles,
-  Crown
+  Crown,
+  Star,
+  Heart,
+  MessageSquare,
+  ShieldCheck
 } from 'lucide-react';
 
 export default function VehicleDetailPage() {
@@ -23,6 +27,12 @@ export default function VehicleDetailPage() {
   const [vehicle, setVehicle] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Reviews & Wishlist State
+  const [reviews, setReviews] = useState([]);
+  const [ratingSummary, setRatingSummary] = useState(null);
+  const [isWishlisted, setIsWishlisted] = useState(false);
+  const [wishlistLoading, setWishlistLoading] = useState(false);
 
   // Booking Form State
   const today = new Date().toISOString().split('T')[0];
@@ -52,8 +62,50 @@ export default function VehicleDetailPage() {
         setLoading(false);
       }
     };
+
+    const fetchReviews = async () => {
+      try {
+        const [revRes, sumRes] = await Promise.all([
+          api.get(`/reviews/vehicle/${id}`),
+          api.get(`/reviews/vehicle/${id}/summary`),
+        ]);
+        setReviews(revRes.data);
+        setRatingSummary(sumRes.data);
+      } catch (err) {
+        console.warn('Failed to load reviews', err);
+      }
+    };
+
     fetchVehicle();
-  }, [id]);
+    fetchReviews();
+
+    if (user) {
+      api.get(`/wishlist/check/${id}`)
+        .then((res) => setIsWishlisted(res.data))
+        .catch(() => {});
+    }
+  }, [id, user]);
+
+  const handleToggleWishlist = async () => {
+    if (!user) {
+      navigate('/login', { state: { from: `/vehicles/${id}` } });
+      return;
+    }
+    setWishlistLoading(true);
+    try {
+      if (isWishlisted) {
+        await api.delete(`/wishlist/${id}`);
+        setIsWishlisted(false);
+      } else {
+        await api.post(`/wishlist/${id}`);
+        setIsWishlisted(true);
+      }
+    } catch (err) {
+      console.error('Wishlist error', err);
+    } finally {
+      setWishlistLoading(false);
+    }
+  };
 
   // Recalculate price whenever dates change
   useEffect(() => {
@@ -184,17 +236,48 @@ export default function VehicleDetailPage() {
             </div>
           </div>
 
-          {/* Vehicle Title & Brand */}
+          {/* Vehicle Title & Brand & Wishlist */}
           <div className="space-y-2">
-            <div className="flex items-center gap-2 text-xs font-bold text-blue-600 uppercase tracking-widest">
-              <span>{vehicle.brand}</span>
-              <span>•</span>
-              <span>Model Year {vehicle.modelYear}</span>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-xs font-bold text-blue-600 uppercase tracking-widest">
+                <span>{vehicle.brand}</span>
+                <span>•</span>
+                <span>Model Year {vehicle.modelYear}</span>
+              </div>
+              <button
+                type="button"
+                onClick={handleToggleWishlist}
+                disabled={wishlistLoading}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition shadow-sm ${
+                  isWishlisted
+                    ? 'bg-rose-50 border-rose-200 text-rose-600'
+                    : 'bg-white border-slate-200 text-slate-700 hover:border-rose-200 hover:text-rose-600'
+                }`}
+              >
+                <Heart className={`w-3.5 h-3.5 ${isWishlisted ? 'fill-current' : ''}`} />
+                <span>{isWishlisted ? 'Saved in Wishlist' : 'Save to Wishlist'}</span>
+              </button>
             </div>
+
             <h1 className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
               {vehicle.name}
             </h1>
-            <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 pt-1">
+
+            {/* Ratings & Station info */}
+            <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 pt-1">
+              {ratingSummary && ratingSummary.totalReviews > 0 ? (
+                <div className="flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 font-bold">
+                  <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
+                  <span>{ratingSummary.averageRating.toFixed(1)}</span>
+                  <span className="text-amber-600/70 font-normal">({ratingSummary.totalReviews} reviews)</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-50 border border-slate-200 rounded-lg text-slate-600 font-medium">
+                  <Star className="w-3.5 h-3.5 text-slate-400" />
+                  <span>New to Fleet (No reviews yet)</span>
+                </div>
+              )}
+
               <span className="flex items-center gap-1">
                 <MapPin className="w-4 h-4 text-blue-500" />
                 <span>Station: {vehicle.location}</span>
@@ -281,6 +364,124 @@ export default function VehicleDetailPage() {
                 <span>Spotless Pre-Event Detailing & Interior Sanitization</span>
               </div>
             </div>
+          </div>
+
+          {/* Customer Reviews & Ratings Section */}
+          <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/80 shadow-sm space-y-6">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <MessageSquare className="w-5 h-5 text-blue-600" />
+                <h3 className="text-base font-bold text-slate-900">
+                  Customer Reviews & Wedding Experiences
+                </h3>
+              </div>
+              <span className="text-xs font-semibold text-slate-500">
+                {reviews.length} {reviews.length === 1 ? 'Review' : 'Reviews'}
+              </span>
+            </div>
+
+            {/* Ratings Summary Card */}
+            {ratingSummary && ratingSummary.totalReviews > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 p-5 rounded-2xl bg-slate-50 border border-slate-100 items-center">
+                <div className="text-center sm:border-r sm:border-slate-200 sm:pr-4">
+                  <div className="text-4xl font-black text-slate-900">
+                    {ratingSummary.averageRating.toFixed(1)}
+                  </div>
+                  <div className="flex items-center justify-center gap-1 my-1.5">
+                    {[1, 2, 3, 4, 5].map((s) => (
+                      <Star
+                        key={s}
+                        className={`w-4 h-4 ${
+                          s <= Math.round(ratingSummary.averageRating)
+                            ? 'text-amber-500 fill-amber-500'
+                            : 'text-slate-200'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <p className="text-[11px] text-slate-500 font-medium">
+                    Based on {ratingSummary.totalReviews} verified rental{ratingSummary.totalReviews > 1 ? 's' : ''}
+                  </p>
+                </div>
+
+                <div className="sm:col-span-2 space-y-1.5 text-xs text-slate-600">
+                  {[5, 4, 3, 2, 1].map((stars) => {
+                    const count = (ratingSummary.ratingCounts && ratingSummary.ratingCounts[stars]) || 0;
+                    const percent = ratingSummary.totalReviews > 0 ? (count / ratingSummary.totalReviews) * 100 : 0;
+                    return (
+                      <div key={stars} className="flex items-center gap-2">
+                        <span className="w-6 text-[11px] font-bold text-slate-600 flex items-center gap-0.5">
+                          {stars}<Star className="w-2.5 h-2.5 fill-amber-500 text-amber-500" />
+                        </span>
+                        <div className="flex-1 h-2 bg-slate-200 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-amber-500 rounded-full transition-all duration-500"
+                            style={{ width: `${percent}%` }}
+                          ></div>
+                        </div>
+                        <span className="w-8 text-right text-[10px] text-slate-400 font-mono">
+                          {count}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : null}
+
+            {/* Individual Reviews List */}
+            {reviews.length === 0 ? (
+              <div className="py-8 text-center text-slate-400 text-xs space-y-1">
+                <Star className="w-8 h-8 mx-auto text-slate-300 stroke-1" />
+                <p className="font-semibold text-slate-700">No reviews yet for this vehicle</p>
+                <p className="text-[11px] text-slate-400">
+                  Customers who complete their wedding reservations can submit verified ratings and photos.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4 divide-y divide-slate-100">
+                {reviews.map((rev) => (
+                  <div key={rev.id} className="pt-4 first:pt-0 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 font-bold text-xs flex items-center justify-center">
+                          {rev.customerName ? rev.customerName.charAt(0).toUpperCase() : 'G'}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h4 className="text-xs font-bold text-slate-900">{rev.customerName}</h4>
+                            <span className="px-1.5 py-0.5 rounded text-[10px] bg-emerald-50 text-emerald-700 font-semibold border border-emerald-200">
+                              Verified Wedding Guest
+                            </span>
+                          </div>
+                          <p className="text-[10px] text-slate-400">
+                            {rev.createdAt ? new Date(rev.createdAt).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent'}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Stars */}
+                      <div className="flex items-center gap-0.5">
+                        {[1, 2, 3, 4, 5].map((s) => (
+                          <Star
+                            key={s}
+                            className={`w-3.5 h-3.5 ${
+                              s <= rev.rating
+                                ? 'text-amber-500 fill-amber-500'
+                                : 'text-slate-200'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+
+                    <p className="text-xs text-slate-600 leading-relaxed pl-10">
+                      "{rev.comment}"
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
         </div>

@@ -2,6 +2,7 @@ package com.vehiclesphere.vehicle;
 
 import com.vehiclesphere.category.Category;
 import com.vehiclesphere.category.CategoryRepository;
+import com.vehiclesphere.exception.BadRequestException;
 import com.vehiclesphere.exception.ConflictException;
 import com.vehiclesphere.exception.ResourceNotFoundException;
 import com.vehiclesphere.vehicle.dto.CreateVehicleRequest;
@@ -9,7 +10,15 @@ import com.vehiclesphere.vehicle.dto.UpdateVehicleRequest;
 import com.vehiclesphere.vehicle.dto.VehicleDto;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.web.multipart.MultipartFile;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -18,6 +27,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class VehicleService {
@@ -150,6 +160,36 @@ public class VehicleService {
                 .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found with id: " + id));
         vehicle.setAvailable(!vehicle.getAvailable());
         return mapToDto(vehicleRepository.save(vehicle));
+    }
+
+    public String uploadVehicleImage(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new BadRequestException("Uploaded file cannot be empty");
+        }
+        String contentType = file.getContentType();
+        if (contentType == null || (!contentType.equals("image/jpeg") && !contentType.equals("image/png") && !contentType.equals("image/webp"))) {
+            throw new BadRequestException("Only JPEG, PNG, and WebP image formats are allowed");
+        }
+        if (file.getSize() > 5 * 1024 * 1024) { // 5MB limit
+            throw new BadRequestException("Image file size must not exceed 5MB");
+        }
+
+        try {
+            String extension = contentType.contains("png") ? "png" : (contentType.contains("webp") ? "webp" : "jpg");
+            String filename = "custom-" + System.currentTimeMillis() + "-" + UUID.randomUUID().toString().substring(0, 8) + "." + extension;
+
+            Path uploadDir = Paths.get("frontend/public/images/vehicles").toAbsolutePath().normalize();
+            if (!Files.exists(uploadDir)) {
+                Files.createDirectories(uploadDir);
+            }
+            Path targetPath = uploadDir.resolve(filename);
+            Files.copy(file.getInputStream(), targetPath, StandardCopyOption.REPLACE_EXISTING);
+            log.info("Stored vehicle image at {}", targetPath);
+            return "/images/vehicles/" + filename;
+        } catch (IOException e) {
+            log.error("Failed to store vehicle image", e);
+            throw new RuntimeException("Could not store image file: " + e.getMessage());
+        }
     }
 
     public VehicleDto mapToDto(Vehicle vehicle) {

@@ -21,7 +21,7 @@ public class DashboardController {
 
     private final DashboardService dashboardService;
 
-    @GetMapping("/admin/dashboard")
+    @GetMapping({"/admin/dashboard", "/dashboard/stats"})
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Get admin dashboard statistics (Admin only)")
     public ResponseEntity<AdminDashboardStatsDto> getAdminDashboard() {

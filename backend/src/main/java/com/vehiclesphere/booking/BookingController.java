@@ -3,13 +3,16 @@ package com.vehiclesphere.booking;
 import com.vehiclesphere.booking.dto.BookingResponseDto;
 import com.vehiclesphere.booking.dto.CreateBookingRequest;
 import com.vehiclesphere.booking.dto.PriceCalculationResponse;
+import com.vehiclesphere.invoice.InvoiceService;
 import com.vehiclesphere.security.UserPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -24,6 +27,7 @@ import java.util.List;
 public class BookingController {
 
     private final BookingService bookingService;
+    private final InvoiceService invoiceService;
 
     @PostMapping
     @Operation(summary = "Create a new booking request (Customer)")
@@ -59,6 +63,19 @@ public class BookingController {
             @AuthenticationPrincipal UserPrincipal principal
     ) {
         return ResponseEntity.ok(bookingService.cancelBooking(id, principal.getId(), principal.getRole()));
+    }
+
+    @GetMapping("/{id}/invoice")
+    @Operation(summary = "Download official PDF rental invoice")
+    public ResponseEntity<byte[]> downloadInvoice(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        byte[] pdfBytes = invoiceService.generateInvoicePdf(id, principal.getId(), principal.getRole());
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_PDF_VALUE)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"invoice-booking-" + id + ".pdf\"")
+                .body(pdfBytes);
     }
 
     @GetMapping("/calculate-price")

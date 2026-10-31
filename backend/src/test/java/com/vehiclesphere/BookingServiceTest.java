@@ -44,6 +44,9 @@ class BookingServiceTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private com.vehiclesphere.notification.EmailService emailService;
+
     @InjectMocks
     private BookingService bookingService;
 

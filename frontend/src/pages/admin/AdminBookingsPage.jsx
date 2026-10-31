@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
-import StatusBadge from '../../components/StatusBadge';
+import StatusBadge, { PaymentStatusBadge } from '../../components/StatusBadge';
 import { 
   Search, 
   Check, 
@@ -12,7 +12,8 @@ import {
   CheckCircle,
   Calendar,
   MapPin,
-  Car
+  Car,
+  Download
 } from 'lucide-react';
 
 export default function AdminBookingsPage() {
@@ -22,6 +23,7 @@ export default function AdminBookingsPage() {
   const [search, setSearch] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
   const [toast, setToast] = useState(null);
+  const [invoiceDownloadingId, setInvoiceDownloadingId] = useState(null);
 
   const fetchBookings = async () => {
     try {
@@ -57,6 +59,31 @@ export default function AdminBookingsPage() {
       });
     } finally {
       setActionLoading(false);
+    }
+  };
+
+  const handleDownloadInvoice = async (booking) => {
+    setInvoiceDownloadingId(booking.id);
+    try {
+      const response = await api.get(`/bookings/${booking.id}/invoice`, {
+        responseType: 'blob',
+      });
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `VehicleSphere-Invoice-${booking.bookingReference}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (err) {
+      setToast({
+        type: 'error',
+        message: 'Failed to download PDF invoice.',
+      });
+    } finally {
+      setInvoiceDownloadingId(null);
     }
   };
 
@@ -157,7 +184,7 @@ export default function AdminBookingsPage() {
                   <th className="px-6 py-4">Vehicle</th>
                   <th className="px-6 py-4">Dates & Location</th>
                   <th className="px-6 py-4">Amount</th>
-                  <th className="px-6 py-4">Status</th>
+                  <th className="px-6 py-4">Status & Payment</th>
                   <th className="px-6 py-4 text-right">Workflow Actions</th>
                 </tr>
               </thead>
@@ -201,10 +228,23 @@ export default function AdminBookingsPage() {
                       <p className="text-[10px] text-slate-400">₹ {Number(b.pricePerDay).toLocaleString('en-IN')} / day</p>
                     </td>
                     <td className="px-6 py-4">
-                      <StatusBadge status={b.status} />
+                      <div className="flex flex-col gap-1 items-start">
+                        <StatusBadge status={b.status} />
+                        <PaymentStatusBadge status={b.paymentStatus} />
+                      </div>
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="inline-flex items-center gap-1.5">
+                        
+                        {/* Download Invoice PDF */}
+                        <button
+                          disabled={invoiceDownloadingId === b.id}
+                          onClick={() => handleDownloadInvoice(b)}
+                          className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-slate-100 rounded-lg transition"
+                          title="Download Tax Invoice PDF"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                        </button>
                         
                         {/* PENDING -> Approve or Reject */}
                         {b.status === 'PENDING' && (

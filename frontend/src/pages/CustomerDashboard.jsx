@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import StatusBadge from '../components/StatusBadge';
+import StatusBadge, { PaymentStatusBadge } from '../components/StatusBadge';
 import { 
   CalendarCheck, 
   Clock, 
@@ -11,7 +11,8 @@ import {
   Car, 
   ArrowRight,
   TrendingUp,
-  MapPin
+  MapPin,
+  Heart
 } from 'lucide-react';
 
 export default function CustomerDashboard() {
@@ -58,10 +59,17 @@ export default function CustomerDashboard() {
             Track your wedding vehicle reservations, event rental statuses, and celebration transport.
           </p>
         </div>
-        <div>
+        <div className="flex flex-wrap items-center gap-3">
+          <Link
+            to="/wishlist"
+            className="inline-flex items-center gap-2 px-4 py-3 bg-white/10 hover:bg-white/20 text-white font-bold rounded-2xl text-xs sm:text-sm backdrop-blur transition border border-white/20"
+          >
+            <Heart className="w-4 h-4 fill-rose-300 text-rose-300" />
+            <span>Saved Wishlist</span>
+          </Link>
           <Link
             to="/vehicles"
-            className="inline-flex items-center gap-2 px-5 py-3 bg-white text-blue-700 hover:bg-blue-50 font-bold rounded-2xl text-xs sm:text-sm shadow transition self-start sm:self-auto"
+            className="inline-flex items-center gap-2 px-5 py-3 bg-white text-blue-700 hover:bg-blue-50 font-bold rounded-2xl text-xs sm:text-sm shadow transition"
           >
             <Car className="w-4 h-4" />
             <span>Book Wedding Vehicle</span>
@@ -192,7 +200,10 @@ export default function CustomerDashboard() {
                       ₹ {Number(b.totalAmount).toLocaleString('en-IN')}
                     </td>
                     <td className="px-6 py-4">
-                      <StatusBadge status={b.status} />
+                      <div className="flex flex-col gap-1 items-start">
+                        <StatusBadge status={b.status} />
+                        <PaymentStatusBadge status={b.paymentStatus} />
+                      </div>
                     </td>
                     <td className="px-6 py-4 text-right">
                       <Link

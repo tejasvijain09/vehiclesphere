@@ -34,6 +34,7 @@ public class BookingResponseDto {
     private BigDecimal pricePerDay;
     private BigDecimal totalAmount;
     private BookingStatus status;
+    private String paymentStatus;
     private String notes;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

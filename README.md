@@ -3,7 +3,7 @@
 > **Final-Year B.Tech Computer Science Capstone Project**  
 > **Student:** Tejasvi, B.Tech CSE, Lovely Professional University  
 > **Contact:** [tejasvijain09@gmail.com](mailto:tejasvijain09@gmail.com) | +91 98154 08330  
-> A full-stack Indian wedding & special-event vehicle rental platform built with Java 21, Spring Boot 3, React 18, Tailwind CSS, and PostgreSQL.
+> A full-stack Indian wedding & special-event vehicle rental platform built with Java 21, Spring Boot 3, React 18, Tailwind CSS, PostgreSQL, Razorpay Test Gateway, and OpenPDF.
 
 ---
 
@@ -20,10 +20,51 @@ The application automatically seeds realistic demo data on initial startup. For 
 
 | Role | Email | Password | Name | Contact | Access Capabilities |
 |---|---|---|---|---|---|
-| **ADMIN** | `admin@vehiclesphere.com` | `Admin@123` | Platform Administrator | `+91 98154 08330` | Full dashboard KPIs, fleet CRUD, wedding booking approval/rejection/status workflows, customer directory |
-| **CUSTOMER** | `gurpreet.singh@example.com` | `Customer@123` | Gurpreet Singh | `+91 98765 43210` | Vehicle browsing, live price calculator, celebration booking creation, reservation tracking, cancellation |
-| **CUSTOMER** | `simran.kaur@example.com` | `Customer@123` | Simran Kaur | `+91 98765 43211` | Second customer account with existing sample bookings |
+| **ADMIN** | `admin@vehiclesphere.com` | `Admin@123` | Platform Administrator | `+91 98154 08330` | Full dashboard KPIs, revenue analytics, fleet CRUD, vehicle image uploads, booking approval/rejection workflows, customer directory |
+| **CUSTOMER** | `gurpreet.singh@example.com` | `Customer@123` | Gurpreet Singh | `+91 98765 43210` | Vehicle browsing, live price calculation, Razorpay payment, wishlist curation, completed trip reviews, PDF invoice download |
+| **CUSTOMER** | `simran.kaur@example.com` | `Customer@123` | Simran Kaur | `+91 98765 43211` | Customer account with existing sample reservations |
 | **CUSTOMER** | `harleen.kaur@example.com` | `Customer@123` | Harleen Kaur | `+91 98155 44321` | Customer account with Indian phone number & Punjabi identity |
+
+---
+
+## 🌟 Advanced Features Overview
+
+### 1. 💳 Razorpay Payment Gateway (Test Mode)
+- **Backend Order Creation:** Securely calculates payable amounts in paise on the backend (`totalAmount * 100`) and generates orders using the Razorpay Java SDK.
+- **HMAC-SHA256 Signature Verification:** Verifies payment authenticity via cryptographic signature checks before marking records as `PAID`. Never trusts untrusted frontend reports.
+- **Duplicate Payment Prevention:** Rejects duplicate payment attempts for already settled bookings.
+- **Built-in Test Mode Simulation:** Seamlessly operates in test mode even when external keys are unconfigured, allowing examiners to verify end-to-end checkout.
+- **Payment History:** Complete customer transaction ledger displaying Order IDs, Payment IDs, timestamps, and status badges.
+
+### 2. 📄 Downloadable PDF Rental Tax Invoice
+- **Automated OpenPDF Engine:** Dynamically generates GST-compliant vehicle rental tax invoices.
+- **Branded & Secured:** Includes VehicleSphere branding, customer GST details, booking reference, rental dates, daily rates, calculated totals, and transaction references.
+- **Access Control:** Customers can only download invoices for their own reservations; administrators can download for any reservation.
+
+### 3. ⭐ Customer Reviews & Ratings System
+- **Verified Trip Reviews:** Only customers who have completed their vehicle rentals (`COMPLETED` status) can submit reviews.
+- **Interactive Ratings:** 1 to 5 star rating with customer commentary.
+- **Duplicate Prevention:** Enforces a unique constraint preventing multiple reviews per booking.
+- **Fleet Showcase:** Displays dynamic star rating summaries, average ratings, and customer feedback on vehicle detail pages.
+
+### 4. 📊 Advanced Admin Dashboard & Analytics
+- **Reconciled Revenue:** Total revenue metric strictly aggregates successfully paid bookings (`payment_status = 'PAID'`).
+- **Dynamic Trend Charts:** Responsive monthly revenue and booking volume charts over time.
+- **Status Distribution:** Visual breakdown of platform reservations (Pending, Confirmed, Active, Completed, Cancelled).
+- **Top 5 Rented Vehicles:** Leaderboard ranking fleet vehicles by rental frequency.
+
+### 5. 🖼️ Vehicle Image Management & Live Preview
+- **Real-Time Preview:** Add/Edit vehicle modal features an instant live image preview box.
+- **Validated Multipart File Upload:** Admins can directly upload vehicle images (JPEG, PNG, WebP up to 5MB) stored safely outside the database.
+
+### 6. ❤️ Customer Wishlist (Saved Vehicles)
+- **Persisted in PostgreSQL:** Wishlists are stored in the database with unique constraints.
+- **One-Click Heart Toggle:** Heart button on vehicle cards and detail pages for quick saving.
+- **Dedicated Wishlist View:** Customers have a dedicated `/wishlist` page to curate and compare their celebration choices.
+
+### 7. 📧 Asynchronous Email Notifications
+- **Spring Boot Mail Integration:** Background async worker (`@Async`) sends branded HTML notifications for registration, booking requests, confirmations, cancellations, and payment receipts.
+- **Development Fallback Mode:** When SMTP credentials are not configured (`app.mail.enabled=false`), all email events are logged cleanly to the console without interrupting requests.
 
 ---
 
@@ -58,199 +99,82 @@ VehicleSphere offers an exclusive luxury celebration fleet across major North In
 - **Web:** Spring Web (RESTful API at `/api/v1`)
 - **Persistence:** Spring Data JPA, Hibernate ORM
 - **Security:** Spring Security 6, Stateless JWT (JSON Web Tokens), BCrypt password hashing
+- **Payments:** Razorpay Java SDK 1.4.6
+- **PDF Generation:** OpenPDF 1.3.39
+- **Email:** Spring Boot Starter Mail with asynchronous background dispatching (`@Async`)
 - **Validation:** Jakarta Bean Validation (Hibernate Validator)
-- **Database Migrations:** Flyway 10
+- **Database Migrations:** Flyway 10 (V1 schema, V2 advanced features)
 - **API Documentation:** Springdoc OpenAPI 2.6.0 with Swagger UI
 - **Build Tool:** Apache Maven 3.9+
 
 ### Frontend
 - **Library:** React 18
 - **Bundler / Tooling:** Vite 5
-- **Styling:** Tailwind CSS 3 (automotive dark navy & cobalt blue theme)
+- **Styling:** Tailwind CSS 3
 - **Routing:** React Router v6
 - **HTTP Client:** Axios with JWT request & response interceptors
+- **Payment UI:** Razorpay Checkout JS integration with fallback test simulator
 - **Icons:** Lucide React
 
 ### Database
 - **Database Engine:** PostgreSQL 17 / 16 / 15
-- **Schema Management:** Automated Flyway migrations (`db/migration/V1__init_schema.sql`)
+- **Flyway Migrations:** 
+  - `V1__init_schema.sql` (Users, Categories, Vehicles, Bookings)
+  - `V2__advanced_features.sql` (Payments, Reviews, Wishlists, payment_status column)
 
 ---
 
-## 📁 Project Directory Structure
-
-```
-VehicleSphere/
-├── backend/
-│   ├── src/
-│   │   ├── main/
-│   │   │   ├── java/com/vehiclesphere/
-│   │   │   │   ├── auth/          # Authentication & registration controllers, DTOs
-│   │   │   │   ├── booking/       # Booking engine, business rules, price calculator
-│   │   │   │   ├── category/      # Vehicle category models & endpoints
-│   │   │   │   ├── config/        # Security, CORS, Swagger, and Data Seeder
-│   │   │   │   ├── dashboard/     # Admin and Customer telemetry statistics
-│   │   │   │   ├── exception/     # Global error handling and HTTP responses
-│   │   │   │   ├── security/      # JWT Provider, Auth Filter, UserDetailsService
-│   │   │   │   ├── user/          # User entities, customer directory
-│   │   │   │   ├── vehicle/       # Vehicle fleet repository and management
-│   │   │   │   └── VehicleSphereApplication.java
-│   │   │   └── resources/
-│   │   │       ├── application.yml
-│   │   │       └── db/migration/  # Flyway database migration scripts
-│   │   └── test/                  # Unit and integration test suite
-│   └── pom.xml
-├── frontend/
-│   ├── src/
-│   │   ├── components/            # Navbar, Footer, ProtectedRoute, VehicleCard, StatusBadge
-│   │   ├── context/               # AuthContext (JWT management, session state)
-│   │   ├── pages/                 # Public & Customer pages (Home, Fleet, Detail, MyBookings)
-│   │   │   └── admin/             # Admin pages (Dashboard, Fleet CRUD, Booking workflows, Users)
-│   │   ├── services/              # Axios instance with Bearer interceptors
-│   │   ├── App.jsx                # Route hierarchy
-│   │   └── main.jsx
-│   ├── package.json
-│   ├── tailwind.config.js
-│   └── vite.config.js
-├── database/
-│   ├── schema.sql                 # Reference SQL schema
-│   └── seed.sql                   # Reference seed data
-├── docs/
-│   ├── ARCHITECTURE.md            # System architectural overview
-│   ├── DATABASE_DESIGN.md         # Database schema & ER details
-│   └── API_DOCUMENTATION.md       # API endpoint specification
-├── .env.example
-├── .gitignore
-└── README.md
-```
-
----
-
-## ⚡ Quick Start & Setup Instructions
+## 🏃 Running the Project Locally
 
 ### 1. Prerequisites
-Ensure you have the following installed on your machine:
-- **Java 21 JDK** (`java -version`)
-- **Maven 3.8+** (`mvn -version`)
-- **Node.js 18+ and npm** (`node -v && npm -v`)
-- **PostgreSQL** (`psql --version`)
-
----
+- **Java 21 JDK**
+- **Node.js 18+ and npm**
+- **PostgreSQL 15+**
+- **Maven 3.8+**
 
 ### 2. Database Setup
-
-1. Start your local PostgreSQL service:
-   ```bash
-   brew services start postgresql@17
-   ```
-
-2. Create the `vehiclesphere` database and user (if not already existing):
-   ```bash
-   psql -U postgres -c "CREATE DATABASE vehiclesphere;"
-   psql -U postgres -c "CREATE USER vehiclesphere WITH PASSWORD 'vehiclesphere';"
-   psql -U postgres -c "GRANT ALL PRIVILEGES ON DATABASE vehiclesphere TO vehiclesphere;"
-   ```
-
-*(Default credentials configured in `application.yml`: Host `localhost:5432`, DB `vehiclesphere`, Username `vehiclesphere`, Password `vehiclesphere`).*
-
----
+```bash
+createdb vehiclesphere
+```
 
 ### 3. Backend Execution
-
-1. Navigate to the `backend/` directory:
-   ```bash
-   cd backend
-   ```
-
-2. Compile and run unit tests:
-   ```bash
-   mvn test
-   ```
-
-3. Launch the Spring Boot application:
-   ```bash
-   mvn spring-boot:run
-   ```
-   *Or run the pre-built JAR:*
-   ```bash
-   java -jar target/vehiclesphere-backend-1.0.0.jar
-   ```
-
-4. The backend will automatically:
-   - Run Flyway migrations.
-   - Seed categories, 12 realistic Indian wedding vehicles, demo users, and bookings.
-   - Start Tomcat on port `8080`.
-
----
+```bash
+cd backend
+mvn clean package -DskipTests
+java -jar target/vehiclesphere-backend-1.0.0.jar
+```
+Backend starts on `http://localhost:8080`.
 
 ### 4. Frontend Execution
-
-1. In a new terminal window, navigate to the `frontend/` directory:
-   ```bash
-   cd frontend
-   ```
-
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-3. Start the Vite development server:
-   ```bash
-   npm run dev
-   ```
-
-4. Open your browser at [http://localhost:5173](http://localhost:5173).
-
----
-
-## 🛡️ Business Rules & Key Logic
-
-1. **Date Validation:**
-   - Pickup date cannot be set in the past.
-   - Return date must be strictly after the pickup date (minimum 1 day rental).
-
-2. **Backend Price Calculation:**
-   - Customers cannot manipulate rental prices on the frontend.
-   - All charges are computed by the backend service using `BigDecimal`:
-     $$\text{Total Amount (₹)} = \text{Rental Days} \times \text{Daily Rate (₹)}$$
-
-3. **Overlapping Booking Prevention (Conflict Detection):**
-   - If a vehicle already has an active or confirmed booking in the range $[P_1, R_1]$, any incoming reservation $[P_2, R_2]$ that satisfies:
-     $$P_1 \le R_2 \quad \text{and} \quad R_1 \ge P_2$$
-     is automatically rejected with **HTTP 409 Conflict**.
-
-4. **Booking Lifecycle Workflow:**
-   - Customer submits: `PENDING`
-   - Admin approves: `CONFIRMED` (or `REJECTED`)
-   - Vehicle delivered to venue: `ACTIVE`
-   - Vehicle returned: `COMPLETED`
-   - Customer can cancel eligible bookings while in `PENDING` or `CONFIRMED` states.
-
-5. **Security Isolation:**
-   - Customers can only access their own booking history.
-   - Administrative endpoints under `/api/v1/admin/**` are strictly guarded by `hasRole('ADMIN')`.
+```bash
+cd frontend
+npm install
+npm run dev
+```
+Frontend starts on `http://localhost:5173`.
 
 ---
 
 ## 📋 Demonstration Walkthrough (For College Viva)
 
-1. **Public Showcase:**
-   - Open [http://localhost:5173](http://localhost:5173).
-   - Point out the Indian wedding rental hero section: *"Make Every Wedding Arrival Unforgettable."*
-   - Show the 3-step celebration process: *Choose Your Wedding Vehicle* ➔ *Select Event Dates & Location* ➔ *Reserve for Your Celebration*.
-   - Filter by Category (e.g. *Royal Luxury*, *Baraat SUVs*) or use the quick search bar.
-2. **Customer Journey:**
-   - Click **Sign In**, select **Customer Demo** (`gurpreet.singh@example.com`), and log in.
-   - Click a vehicle (e.g. *BMW 530i M Sport*).
-   - Notice the daily rate formatted as `₹ 18,000 / day` and station at *Chandigarh (Sector 17)*.
-   - Select 3 days rental dates — watch the live calculation display `₹ 54,000`.
-   - Submit booking request ➔ view booking in **My Bookings** with status `PENDING`.
-3. **Admin Control:**
-   - Sign out and click **Sign In** ➔ **Admin Demo** (`admin@vehiclesphere.com`).
-   - Show the **Admin Dashboard** with revenue KPIs in Indian Rupees (`₹ 47,500`), fleet counts, and pending bookings.
-   - Go to **Review Bookings**, locate the booking, and click **Approve** (transitions to `CONFIRMED`).
-   - Demonstrate marking the rental as `ACTIVE` and `COMPLETED`.
-   - Go to **Fleet Management**, showcase editing specifications, adding a new vehicle, or toggling availability.
-4. **API Documentation:**
-   - Open [http://localhost:8080/swagger-ui/index.html](http://localhost:8080/swagger-ui/index.html) to demonstrate the interactive OpenAPI documentation with JWT authorize capability.
+1. **Customer Booking & Razorpay Payment:**
+   - Log in as Customer `gurpreet.singh@example.com` (password: `Customer@123`).
+   - Browse fleet, select a vehicle (e.g. *Mercedes S-Class*), and reserve celebration dates.
+   - Go to **My Bookings**, notice the **UNPAID** badge, and click **Pay with Razorpay**.
+   - Complete authorization in the modal ➔ Booking status automatically transitions to **CONFIRMED** and payment status becomes **PAID**.
+2. **Download GST Tax Invoice:**
+   - In **My Bookings**, click **Tax Invoice** on any confirmed/completed booking.
+   - Observe the instantly downloaded branded PDF containing customer details, invoice numbers, breakdown, and payment transaction reference.
+3. **Wishlist Management:**
+   - Click the heart icon on any vehicle card to save it.
+   - Navigate to **Wishlist** from the top bar to inspect your saved celebration collection.
+4. **Customer Review Submission:**
+   - On completed booking records, click **Review Vehicle**.
+   - Submit a 5-star rating with personal feedback.
+   - Visit the vehicle's details page to observe the newly updated average rating and customer review card.
+5. **Admin Analytics & Management:**
+   - Log in as Admin `admin@vehiclesphere.com` (password: `Admin@123`).
+   - Inspect the **Admin Dashboard** showing paid revenue (strictly aggregated from successful payments), monthly revenue trends, status distribution, and top rented vehicles.
+   - Navigate to **Vehicles**, click **Add Vehicle** or **Edit**, and test the **Live Photo Preview** and **Upload Image** features.
+6. **API Documentation:**
+   - Open [http://localhost:8080/swagger-ui/index.html](http://localhost:8080/swagger-ui/index.html) to demonstrate all 25+ secured endpoints and interactive documentation.

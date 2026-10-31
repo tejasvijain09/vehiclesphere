@@ -9,6 +9,15 @@ const statusStyles = {
   CANCELLED: 'bg-slate-100 text-slate-600 border-slate-200',
 };
 
+const paymentStatusStyles = {
+  PAID: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  SUCCESS: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  UNPAID: 'bg-amber-50 text-amber-700 border-amber-200',
+  CREATED: 'bg-amber-50 text-amber-700 border-amber-200',
+  FAILED: 'bg-rose-50 text-rose-700 border-rose-200',
+  REFUNDED: 'bg-purple-50 text-purple-700 border-purple-200',
+};
+
 export default function StatusBadge({ status }) {
   const style = statusStyles[status] || 'bg-slate-100 text-slate-700 border-slate-200';
   return (
@@ -17,6 +26,19 @@ export default function StatusBadge({ status }) {
     >
       <span className="w-1.5 h-1.5 rounded-full mr-1.5 bg-current opacity-70"></span>
       {status}
+    </span>
+  );
+}
+
+export function PaymentStatusBadge({ status }) {
+  const normStatus = status ? status.toUpperCase() : 'UNPAID';
+  const style = paymentStatusStyles[normStatus] || 'bg-slate-100 text-slate-700 border-slate-200';
+  return (
+    <span
+      className={`inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold border tracking-wide uppercase ${style}`}
+    >
+      <span className="w-1.5 h-1.5 rounded-full mr-1.5 bg-current opacity-80"></span>
+      {normStatus === 'SUCCESS' ? 'PAID' : normStatus}
     </span>
   );
 }

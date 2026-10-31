@@ -11,7 +11,8 @@ import {
   CalendarCheck, 
   ShieldCheck, 
   Settings,
-  Users
+  Users,
+  Heart
 } from 'lucide-react';
 
 export default function Navbar() {
@@ -78,6 +79,15 @@ export default function Navbar() {
                   }`}
                 >
                   My Bookings
+                </Link>
+                <Link
+                  to="/wishlist"
+                  className={`text-sm font-medium transition flex items-center gap-1.5 ${
+                    isActive('/wishlist') ? 'text-rose-600 font-semibold' : 'text-slate-600 hover:text-rose-600'
+                  }`}
+                >
+                  <Heart className="w-3.5 h-3.5 fill-rose-500 text-rose-500" />
+                  <span>Wishlist</span>
                 </Link>
               </>
             )}
@@ -152,6 +162,17 @@ export default function Navbar() {
                       <UserIcon className="w-4 h-4 text-slate-400" />
                       My Profile
                     </Link>
+
+                    {!isAdmin && (
+                      <Link
+                        to="/wishlist"
+                        onClick={() => setDropdownOpen(false)}
+                        className="flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                      >
+                        <Heart className="w-4 h-4 text-rose-500 fill-rose-500" />
+                        My Wishlist
+                      </Link>
+                    )}
 
                     {isAdmin ? (
                       <Link
@@ -268,6 +289,14 @@ export default function Navbar() {
                     className="block px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50"
                   >
                     My Bookings
+                  </Link>
+                  <Link
+                    to="/wishlist"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block px-3 py-2 rounded-lg text-sm font-medium text-rose-600 hover:bg-rose-50 flex items-center gap-2"
+                  >
+                    <Heart className="w-4 h-4 fill-rose-500" />
+                    My Wishlist
                   </Link>
                 </>
               )}

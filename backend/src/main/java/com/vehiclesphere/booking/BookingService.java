@@ -30,6 +30,7 @@ public class BookingService {
     private final BookingRepository bookingRepository;
     private final VehicleRepository vehicleRepository;
     private final UserRepository userRepository;
+    private final com.vehiclesphere.notification.EmailService emailService;
 
     @Transactional
     public BookingResponseDto createBooking(Long userId, CreateBookingRequest request) {
@@ -74,7 +75,15 @@ public class BookingService {
                 .notes(request.getNotes())
                 .build();
 
-        return mapToDto(bookingRepository.save(booking));
+        Booking saved = bookingRepository.save(booking);
+        emailService.sendBookingCreatedEmail(
+                saved.getUser().getEmail(),
+                saved.getUser().getFullName(),
+                saved.getBookingReference(),
+                saved.getVehicle().getName(),
+                saved.getTotalAmount()
+        );
+        return mapToDto(saved);
     }
 
     @Transactional(readOnly = true)
@@ -146,7 +155,16 @@ public class BookingService {
         booking.setStatus(BookingStatus.CANCELLED);
         booking.setNotes((booking.getNotes() != null ? booking.getNotes() + " | " : "") + "Cancelled by " + userRole.name().toLowerCase());
 
-        return mapToDto(bookingRepository.save(booking));
+        Booking saved = bookingRepository.save(booking);
+        emailService.sendBookingStatusEmail(
+                saved.getUser().getEmail(),
+                saved.getUser().getFullName(),
+                saved.getBookingReference(),
+                saved.getVehicle().getName(),
+                "CANCELLED",
+                saved.getNotes()
+        );
+        return mapToDto(saved);
     }
 
     @Transactional
@@ -172,7 +190,16 @@ public class BookingService {
             booking.setNotes(request.getNotes());
         }
 
-        return mapToDto(bookingRepository.save(booking));
+        Booking saved = bookingRepository.save(booking);
+        emailService.sendBookingStatusEmail(
+                saved.getUser().getEmail(),
+                saved.getUser().getFullName(),
+                saved.getBookingReference(),
+                saved.getVehicle().getName(),
+                saved.getStatus().name(),
+                saved.getNotes()
+        );
+        return mapToDto(saved);
     }
 
     private void validateDates(LocalDate pickupDate, LocalDate returnDate) {
@@ -213,6 +240,7 @@ public class BookingService {
                 .pricePerDay(booking.getPricePerDay())
                 .totalAmount(booking.getTotalAmount())
                 .status(booking.getStatus())
+                .paymentStatus(booking.getPaymentStatus() != null ? booking.getPaymentStatus() : "UNPAID")
                 .notes(booking.getNotes())
                 .createdAt(booking.getCreatedAt())
                 .updatedAt(booking.getUpdatedAt())

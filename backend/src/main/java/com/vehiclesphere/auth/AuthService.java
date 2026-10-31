@@ -25,6 +25,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider tokenProvider;
+    private final com.vehiclesphere.notification.EmailService emailService;
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
@@ -41,6 +42,8 @@ public class AuthService {
                 .build();
 
         user = userRepository.save(user);
+
+        emailService.sendRegistrationEmail(user.getEmail(), user.getFullName());
 
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(

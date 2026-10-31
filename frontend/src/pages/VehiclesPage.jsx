@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import api from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import VehicleCard from '../components/VehicleCard';
 import { Search, RotateCcw, Car } from 'lucide-react';
 
 export default function VehiclesPage() {
+  const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const [vehicles, setVehicles] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [wishlistIds, setWishlistIds] = useState(new Set());
 
   // Filters
   const [search, setSearch] = useState(searchParams.get('search') || '');
@@ -38,6 +41,17 @@ export default function VehiclesPage() {
       })
       .catch((err) => console.error('Failed to load categories', err));
   }, [searchParams]);
+
+  // Load wishlist IDs if user is logged in
+  useEffect(() => {
+    if (user) {
+      api.get('/wishlist')
+        .then((res) => setWishlistIds(new Set(res.data.map((v) => v.id))))
+        .catch(() => {});
+    } else {
+      setWishlistIds(new Set());
+    }
+  }, [user]);
 
   // Sync state if URL query params update
   useEffect(() => {
@@ -247,7 +261,11 @@ export default function VehiclesPage() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {vehicles.map((v) => (
-            <VehicleCard key={v.id} vehicle={v} />
+            <VehicleCard
+              key={v.id}
+              vehicle={v}
+              initialWishlisted={wishlistIds.has(v.id)}
+            />
           ))}
         </div>
       )}

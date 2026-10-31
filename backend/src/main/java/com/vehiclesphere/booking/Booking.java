@@ -58,6 +58,10 @@ public class Booking {
     @Builder.Default
     private BookingStatus status = BookingStatus.PENDING;
 
+    @Column(name = "payment_status", nullable = false, length = 30)
+    @Builder.Default
+    private String paymentStatus = "UNPAID";
+
     @Column(columnDefinition = "TEXT")
     private String notes;
 

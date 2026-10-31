@@ -19,8 +19,12 @@ public class AdminDashboardStatsDto {
     private long availableVehicles;
     private long totalBookings;
     private long pendingBookings;
+    private long confirmedBookings;
     private long activeRentals;
     private long completedBookings;
     private BigDecimal totalRevenue;
     private List<BookingResponseDto> recentBookings;
+    private List<MonthlyDataDto> monthlyTrends;
+    private List<StatusCountDto> statusDistribution;
+    private List<TopVehicleDto> topRentedVehicles;
 }

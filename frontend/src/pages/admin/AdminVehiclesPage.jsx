@@ -11,7 +11,9 @@ import {
   AlertCircle, 
   CheckCircle,
   ToggleLeft,
-  ToggleRight
+  ToggleRight,
+  Upload,
+  Image as ImageIcon
 } from 'lucide-react';
 
 export default function AdminVehiclesPage() {
@@ -46,6 +48,35 @@ export default function AdminVehiclesPage() {
     available: true,
   };
   const [formData, setFormData] = useState(initialFormState);
+  const [uploadingImage, setUploadingImage] = useState(false);
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      setModalError('File size must not exceed 5MB');
+      return;
+    }
+
+    const formDataObj = new FormData();
+    formDataObj.append('file', file);
+
+    setUploadingImage(true);
+    setModalError(null);
+    try {
+      const res = await api.post('/vehicles/upload-image', formDataObj, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      setFormData((prev) => ({ ...prev, imageUrl: res.data.imageUrl }));
+    } catch (err) {
+      setModalError(err.response?.data?.message || 'Failed to upload image');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
 
   const fetchVehicles = async () => {
     try {
@@ -530,18 +561,52 @@ export default function AdminVehiclesPage() {
                   />
                 </div>
 
-                <div className="sm:col-span-2">
-                  <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1">
-                    Image URL
-                  </label>
+                <div className="sm:col-span-2 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider">
+                      Vehicle Photo & Live Preview
+                    </label>
+                    <label className="cursor-pointer px-3 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold rounded-lg transition inline-flex items-center gap-1.5 border border-blue-200 shadow-sm">
+                      <Upload className="w-3.5 h-3.5" />
+                      <span>{uploadingImage ? 'Uploading...' : 'Upload File (Max 5MB)'}</span>
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        onChange={handleImageUpload}
+                        className="hidden"
+                        disabled={uploadingImage}
+                      />
+                    </label>
+                  </div>
+
                   <input
-                    type="url"
+                    type="text"
                     required
                     value={formData.imageUrl}
                     onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-                    placeholder="https://images.unsplash.com/photo-..."
+                    placeholder="https://... or /images/vehicles/..."
                     className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 bg-slate-50"
                   />
+
+                  {/* Live Photo Preview */}
+                  {formData.imageUrl && (
+                    <div className="relative h-40 rounded-xl overflow-hidden border border-slate-200 bg-slate-100 flex items-center justify-center">
+                      <img
+                        src={formData.imageUrl}
+                        alt="Vehicle preview"
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                        }}
+                        onLoad={(e) => {
+                          e.target.style.display = 'block';
+                        }}
+                      />
+                      <span className="absolute bottom-2 left-2 px-2.5 py-1 rounded-lg bg-black/70 backdrop-blur text-white text-[10px] font-bold shadow">
+                        Live Photo Preview
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="sm:col-span-2">

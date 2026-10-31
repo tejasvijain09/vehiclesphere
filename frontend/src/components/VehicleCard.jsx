@@ -1,12 +1,45 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { Fuel, Users, Gauge, MapPin, ArrowRight } from 'lucide-react';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Fuel, Users, Gauge, MapPin, ArrowRight, Heart } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import api from '../services/api';
 
-export default function VehicleCard({ vehicle }) {
+export default function VehicleCard({ vehicle, initialWishlisted = false, onWishlistToggle }) {
   const formattedPrice = Number(vehicle.pricePerDay).toLocaleString('en-IN');
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [isWishlisted, setIsWishlisted] = useState(initialWishlisted);
+  const [wishlistLoading, setWishlistLoading] = useState(false);
+
+  const handleToggleWishlist = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+
+    setWishlistLoading(true);
+    try {
+      if (isWishlisted) {
+        await api.delete(`/wishlist/${vehicle.id}`);
+        setIsWishlisted(false);
+        if (onWishlistToggle) onWishlistToggle(vehicle.id, false);
+      } else {
+        await api.post(`/wishlist/${vehicle.id}`);
+        setIsWishlisted(true);
+        if (onWishlistToggle) onWishlistToggle(vehicle.id, true);
+      }
+    } catch (err) {
+      console.error('Wishlist toggle error', err);
+    } finally {
+      setWishlistLoading(false);
+    }
+  };
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 flex flex-col group">
+    <div className="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 flex flex-col group relative">
       
       {/* Image container */}
       <div className="relative h-48 sm:h-52 w-full overflow-hidden bg-slate-100">
@@ -28,6 +61,22 @@ export default function VehicleCard({ vehicle }) {
             </span>
           )}
         </div>
+
+        {/* Wishlist Heart Button */}
+        <button
+          type="button"
+          onClick={handleToggleWishlist}
+          disabled={wishlistLoading}
+          aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+          className={`absolute top-3 right-3 w-9 h-9 rounded-full flex items-center justify-center transition backdrop-blur shadow-md ${
+            isWishlisted
+              ? 'bg-rose-500 text-white'
+              : 'bg-white/90 text-slate-600 hover:text-rose-500 hover:bg-white'
+          }`}
+        >
+          <Heart className={`w-4 h-4 ${isWishlisted ? 'fill-current' : ''}`} />
+        </button>
+
         <div className="absolute bottom-3 right-3">
           <div className="px-3 py-1.5 rounded-xl bg-slate-900/85 backdrop-blur text-white flex items-baseline gap-1.5 shadow-sm">
             <span className="text-sm sm:text-base font-extrabold tracking-tight">₹ {formattedPrice}</span>
