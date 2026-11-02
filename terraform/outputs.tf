@@ -51,3 +51,13 @@ output "s3_bucket_name" {
   description = "Encrypted Amazon S3 Bucket Name for vehicle assets and invoices"
   value       = aws_s3_bucket.assets.bucket
 }
+
+output "cloudwatch_alerts_topic_arn" {
+  description = "SNS Topic ARN for CloudWatch Metric Alarms"
+  value       = aws_sns_topic.devops_alerts.arn
+}
+
+output "cloudwatch_dashboard_name" {
+  description = "Name of CloudWatch Monitoring Dashboard"
+  value       = aws_cloudwatch_dashboard.vehiclesphere.dashboard_name
+}

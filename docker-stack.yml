@@ -1,0 +1,143 @@
+# =============================================================================
+# VehicleSphere — Docker Swarm Production Stack Specification
+# Deploy Command: docker stack deploy -c docker-stack.yml vehiclesphere
+# =============================================================================
+version: "3.8"
+
+services:
+  # ---------------------------------------------------------------------------
+  # 1. Database Service: PostgreSQL 17
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ${DB_NAME:-vehiclesphere}
+      POSTGRES_USER: ${DB_USERNAME:-vehiclesphere}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-vehiclesphere_secure_db_pass_2024}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - vehiclesphere-overlay
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+      resources:
+        limits:
+          cpus: "1.00"
+          memory: 1024M
+        reservations:
+          cpus: "0.25"
+          memory: 256M
+
+  # ---------------------------------------------------------------------------
+  # 2. Backend API Service: Spring Boot 3.3.4 (Replicated Swarm Service)
+  # ---------------------------------------------------------------------------
+  backend:
+    image: ${BACKEND_IMAGE:-vehiclesphere-backend:latest}
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SERVER_PORT: 8080
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-vehiclesphere}
+      DB_USERNAME: ${DB_USERNAME:-vehiclesphere}
+      DB_PASSWORD: ${DB_PASSWORD:-vehiclesphere_secure_db_pass_2024}
+      JWT_SECRET: ${JWT_SECRET:-changeThisToAVeryLongAndSecureRandomSecretKeyForProductionUse2024VehicleSphereVehicleSphereSecureToken}
+      RAZORPAY_KEY_ID: ${RAZORPAY_KEY_ID:-rzp_test_VehicleSphereMock}
+      RAZORPAY_KEY_SECRET: ${RAZORPAY_KEY_SECRET:-MockSecretKeyVehicleSphereTest123}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost,http://localhost:80}
+      MAIL_ENABLED: "false"
+    networks:
+      - vehiclesphere-overlay
+    depends_on:
+      - postgres
+    deploy:
+      replicas: 2
+      update_config:
+        parallelism: 1
+        delay: 15s
+        order: start-first
+        failure_action: rollback
+      rollback_config:
+        parallelism: 1
+        order: stop-first
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 3
+      resources:
+        limits:
+          cpus: "1.00"
+          memory: 1024M
+        reservations:
+          cpus: "0.30"
+          memory: 512M
+
+  # ---------------------------------------------------------------------------
+  # 3. Frontend Web Service: React 18 + Nginx SPA
+  # ---------------------------------------------------------------------------
+  frontend:
+    image: ${FRONTEND_IMAGE:-vehiclesphere-frontend:latest}
+    networks:
+      - vehiclesphere-overlay
+    deploy:
+      replicas: 2
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: start-first
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 256M
+        reservations:
+          cpus: "0.10"
+          memory: 64M
+
+  # ---------------------------------------------------------------------------
+  # 4. Ingress / Edge Gateway: Nginx Reverse Proxy
+  # ---------------------------------------------------------------------------
+  nginx:
+    image: ${NGINX_IMAGE:-vehiclesphere-nginx:latest}
+    ports:
+      - target: 80
+        published: 80
+        protocol: tcp
+        mode: ingress
+    networks:
+      - vehiclesphere-overlay
+    depends_on:
+      - backend
+      - frontend
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 128M
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  vehiclesphere-overlay:
+    driver: overlay
+    attachable: true

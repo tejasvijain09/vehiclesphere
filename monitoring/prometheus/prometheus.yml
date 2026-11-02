@@ -55,3 +55,12 @@ scrape_configs:
         labels:
           application: "container-metrics"
           tier: "infrastructure"
+
+  # OpenTelemetry Collector Metrics (OTLP Pipeline)
+  - job_name: "otel-collector"
+    scrape_interval: 15s
+    static_configs:
+      - targets: ["otel-collector:8889"]
+        labels:
+          application: "opentelemetry"
+          tier: "telemetry"

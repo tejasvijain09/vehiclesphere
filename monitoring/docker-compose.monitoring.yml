@@ -96,6 +96,21 @@ services:
     networks:
       - vehiclesphere-net
 
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.108.0
+    container_name: vehiclesphere-otel-collector
+    restart: unless-stopped
+    command: ["--config=/etc/otel-collector-config.yml"]
+    volumes:
+      - ./otel/otel-collector-config.yml:/etc/otel-collector-config.yml:ro
+    ports:
+      - "4317:4317" # OTLP gRPC receiver
+      - "4318:4318" # OTLP HTTP receiver
+      - "8888:8888" # Collector internal metrics
+      - "8889:8889" # Prometheus exporter metrics
+    networks:
+      - vehiclesphere-net
+
 volumes:
   prometheus_data:
   alertmanager_data:

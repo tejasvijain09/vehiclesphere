@@ -138,6 +138,18 @@ Located in `monitoring/`:
     - Process vs System CPU Usage
 - **Loki & Promtail (`monitoring/loki/` & `monitoring/promtail/`):**
   - Lightweight centralized log aggregation collecting logs from all Docker containers and streaming them directly into Grafana for real-time log querying and correlation.
+- **OpenTelemetry Collector (`monitoring/otel/`):**
+  - Vendor-neutral telemetry pipeline ingesting OTLP gRPC (:4317) & HTTP (:4318) metrics, traces, and logs with batch processing, memory limiting, and Prometheus exporter (:8889).
+- **Nagios Host & Service Checks (`monitoring/nagios/`):**
+  - Traditional enterprise infrastructure monitoring with host definition, HTTP check, TCP check (PostgreSQL 5432), and custom plugin `check_vehiclesphere_health.sh` monitoring `/actuator/health` with Nagios exit codes.
+
+### 2.7 Python Synthetic Load & Traffic Simulation (`scripts/load_test.py`)
+- Automated multi-threaded Python benchmarking and simulation engine.
+- Simulates concurrent customer browsing, vehicle searches, single vehicle lookups, JWT authenticated reservations, and Actuator metrics polling.
+- Zero external dependencies (uses native `urllib.request` and `concurrent.futures`), reporting total requests, throughput, p95/p99 latency, and lighting up live Grafana charts.
+
+### 2.8 Docker Swarm Orchestration (`docker-stack.yml`)
+- Multi-node Swarm stack with overlay network (`vehiclesphere-overlay`), service replication (2 backend, 2 frontend), rolling update policies (`parallelism: 1`, `order: start-first`, `failure_action: rollback`), and manager/worker placement constraints.
 
 ---
 
@@ -188,7 +200,32 @@ helm install vehiclesphere helm/vehiclesphere --namespace vehiclesphere --create
 kubectl get pods,svc,hpa -n vehiclesphere
 ```
 
-### 3.4 Infrastructure as Code via Terraform
+### 3.4 Docker Swarm Deployment
+```bash
+# 1. Initialize Swarm cluster (if not already active)
+docker swarm init
+
+# 2. Deploy the stack
+docker stack deploy -c docker-stack.yml vehiclesphere
+
+# 3. Inspect Swarm services & replicas
+docker stack services vehiclesphere
+docker service ps vehiclesphere_backend
+```
+
+### 3.5 Python Synthetic Traffic & Load Generation
+```bash
+# Run 10 concurrent virtual users for 60 seconds against backend
+python3 scripts/load_test.py --url http://localhost:8080 --users 10 --duration 60
+```
+
+### 3.6 Nagios Health Check Plugin Execution
+```bash
+# Run Nagios probe against Spring Boot Actuator
+./monitoring/nagios/plugins/check_vehiclesphere_health.sh -H 127.0.0.1 -p 8080
+```
+
+### 3.7 Infrastructure as Code via Terraform
 ```bash
 cd terraform
 cp terraform.tfvars.example terraform.tfvars

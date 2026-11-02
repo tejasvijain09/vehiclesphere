@@ -182,12 +182,13 @@ VehicleSphere offers an exclusive luxury celebration fleet across major North In
 - **Migrations:** Flyway version-controlled migrations
 
 ### DevOps, Cloud & Observability
-- **Containers:** Docker, Multi-Stage Dockerfiles, Docker Compose v2
-- **CI/CD:** Jenkins Declarative Pipeline, Trivy Container Security Scanner
-- **Infrastructure as Code:** HashiCorp Terraform (AWS VPC, Subnets, Security Groups, RDS, Secrets Manager, EC2, S3)
+- **Containers & Clustering:** Docker, Multi-Stage Dockerfiles, Docker Compose v2, **Docker Swarm** (`docker-stack.yml`)
+- **CI/CD:** Jenkins Declarative Pipeline (`Jenkinsfile`), Trivy Container Security Scanner
+- **Infrastructure as Code:** HashiCorp Terraform (AWS VPC, Subnets, Security Groups, RDS, Secrets Manager, EC2, S3, **CloudWatch Alarms & Dashboards**)
 - **Configuration Management:** Ansible Playbooks, Puppet Manifests
-- **Orchestration:** Kubernetes 1.30+ Manifests, Horizontal Pod Autoscaler (HPA), Helm 3 Chart
-- **Observability:** Prometheus, Grafana, Loki, Alertmanager, Promtail, Node Exporter
+- **Orchestration:** Kubernetes 1.30+ Manifests, Minikube, Horizontal Pod Autoscaler (HPA), Helm 3 Chart
+- **Observability & Reliability:** Prometheus, Grafana, PromQL, Alertmanager, **Loki**, **OpenTelemetry Collector (OTel)**, **Nagios** host/service plugins
+- **Testing & Traffic Generation:** Python 3 concurrent load generator (`scripts/load_test.py`)
 
 ---
 
@@ -225,7 +226,19 @@ helm lint helm/vehiclesphere
 helm install vehiclesphere helm/vehiclesphere --namespace vehiclesphere --create-namespace
 ```
 
-### 4. Running Backend & Frontend for Local Development
+### 4. Deploy with Docker Swarm (Clustered Stack)
+```bash
+# Deploy to Docker Swarm overlay network
+docker stack deploy -c docker-stack.yml vehiclesphere
+```
+
+### 5. Generate Synthetic Traffic with Python (For Viva Demonstration)
+```bash
+# Run 10 virtual users for 60s to light up Prometheus & Grafana charts
+python3 scripts/load_test.py --url http://localhost:8080 --users 10 --duration 60
+```
+
+### 6. Running Backend & Frontend for Local Development
 ```bash
 # Backend (Java 21):
 cd backend

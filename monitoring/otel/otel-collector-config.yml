@@ -1,0 +1,73 @@
+# =============================================================================
+# VehicleSphere — OpenTelemetry Collector Configuration
+# =============================================================================
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+  # Scrape Spring Boot Micrometer Actuator metrics
+  prometheus:
+    config:
+      scrape_configs:
+        - job_name: "vehiclesphere-backend-otel"
+          scrape_interval: 10s
+          metrics_path: "/actuator/prometheus"
+          static_configs:
+            - targets: ["backend:8080"]
+
+processors:
+  batch:
+    timeout: 1s
+    send_batch_size: 1024
+
+  memory_limiter:
+    check_interval: 1s
+    limit_percentage: 75
+    spike_limit_percentage: 20
+
+  resource:
+    attributes:
+      - key: service.name
+        value: vehiclesphere-backend
+        action: insert
+      - key: deployment.environment
+        value: production
+        action: insert
+
+exporters:
+  # Expose processed metrics for Prometheus scrape
+  prometheus:
+    endpoint: 0.0.0.0:8889
+    namespace: vehiclesphere
+
+  # Output traces, metrics, and logs to container logs for debugging
+  debug:
+    verbosity: basic
+
+service:
+  pipelines:
+    metrics:
+      receivers: [prometheus, otlp]
+      processors: [memory_limiter, resource, batch]
+      exporters: [prometheus, debug]
+
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, resource, batch]
+      exporters: [debug]
+
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, resource, batch]
+      exporters: [debug]
+
+  telemetry:
+    logs:
+      level: info
+    metrics:
+      address: 0.0.0.0:8888
