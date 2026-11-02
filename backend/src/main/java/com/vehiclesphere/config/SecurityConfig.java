@@ -65,6 +65,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/bookings/calculate-price").permitAll()
                         // Swagger UI & OpenAPI documentation
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                        // Spring Boot Actuator health & Prometheus metrics endpoints
+                        .requestMatchers("/actuator/**").permitAll()
                         // Admin endpoints
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                         // All other endpoints require authentication
