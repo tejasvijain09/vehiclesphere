@@ -1,19 +1,24 @@
 # VehicleSphere — Cloud-Native Wedding & Event Vehicle Rental Platform
 
-> **Final-Year B.Tech Computer Science Capstone Project**  
+> **Final-Year B.Tech Computer Science Capstone Project & DevOps Lifecycle**  
 > **Student:** Tejasvi, B.Tech CSE, Lovely Professional University  
 > **Contact:** [tejasvijain09@gmail.com](mailto:tejasvijain09@gmail.com) | +91 98154 08330  
-> A full-stack Indian wedding & special-event vehicle rental platform built with Java 21, Spring Boot 3, React 18, Tailwind CSS, PostgreSQL, Razorpay Test Gateway, and OpenPDF.
+> A full-stack Indian wedding & special-event vehicle rental platform built with Java 21, Spring Boot 3, React 18, Tailwind CSS, PostgreSQL 17, Docker, Jenkins CI/CD, AWS Terraform IaC, Ansible, Puppet, Kubernetes, Helm, Prometheus, Grafana, Loki, Alertmanager, Razorpay Test Gateway, and OpenPDF.
 
 ---
 
 ## 🚀 Live Demo Quick Reference
 
-- **Frontend Application:** [http://localhost:5173](http://localhost:5173)
+- **Frontend Application (Dev):** [http://localhost:5173](http://localhost:5173)
+- **Edge Reverse Proxy (Docker):** [http://localhost](http://localhost)
 - **Admin Portal (Auto-Redirects):** [http://localhost:5173/admin](http://localhost:5173/admin) ➔ `/admin/dashboard`
 - **Backend REST API:** [http://localhost:8080](http://localhost:8080)
 - **Interactive Swagger UI:** [http://localhost:8080/swagger-ui/index.html](http://localhost:8080/swagger-ui/index.html)
-- **OpenAPI 3 JSON Schema:** [http://localhost:8080/v3/api-docs](http://localhost:8080/v3/api-docs)
+- **Spring Boot Actuator Health:** [http://localhost:8080/actuator/health](http://localhost:8080/actuator/health)
+- **Prometheus Metrics Endpoint:** [http://localhost:8080/actuator/prometheus](http://localhost:8080/actuator/prometheus)
+- **Grafana Observability Dashboard:** [http://localhost:3000](http://localhost:3000) (`admin` / `admin`)
+- **Prometheus TSDB:** [http://localhost:9090](http://localhost:9090)
+- **Alertmanager:** [http://localhost:9093](http://localhost:9093)
 
 ### 🔑 Demo Login Credentials
 
@@ -28,7 +33,55 @@ The application automatically seeds realistic demo data on initial startup. For 
 
 ---
 
-## 🌟 Advanced Features Overview
+## 🏗️ DevOps & Cloud-Native Engineering
+
+VehicleSphere implements a complete, production-grade DevOps lifecycle covering infrastructure automation, continuous integration, zero-downtime orchestration, and continuous monitoring:
+
+```mermaid
+graph LR
+    CODE[Git Repo] -->|Push| CI[Jenkins CI/CD Pipeline]
+    CI -->|Scan & Package| DOCKER[Multi-Stage Containers]
+    DOCKER -->|Deploy| K8S[Kubernetes Cluster / Helm]
+    IAC[Terraform AWS] -->|Provisions VPC/RDS/EC2| INFRA[Cloud Infrastructure]
+    CM[Ansible & Puppet] -->|Host Hardening| INFRA
+    K8S -->|Scrape Actuator| OBS[Prometheus + Grafana + Loki]
+```
+
+### 1. 🐳 Containerization (`docker-compose.yml`)
+- Multi-stage `backend/Dockerfile` with non-root security user (`vehiclesphere`), JVM container memory optimization (`-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0`), and built-in Actuator healthcheck.
+- Multi-stage `frontend/Dockerfile` leveraging Node 22 build caching and an Nginx 1.27 Alpine runtime with client-side SPA routing fallbacks.
+- Edge `nginx/Dockerfile` providing rate-limiting, CORS handling, client payload limits, and unified reverse proxy routing.
+- Composable stack in `docker-compose.yml` linking PostgreSQL 17, Backend, Frontend, and Nginx.
+
+### 2. 🔄 Enterprise Jenkins CI/CD (`Jenkinsfile`)
+- Declarative 8-stage pipeline with automated checkout, environment validation, backend Maven test reporting with JUnit archives, frontend Vite production compilation, executable JAR packaging, multi-image Docker builds, container vulnerability scanning with **Trivy**, registry push, and automated staging smoke testing.
+
+### 3. ☁️ AWS Infrastructure as Code (`terraform/`)
+- Complete Terraform module provisioning a custom Multi-AZ VPC (`10.0.0.0/16`) in `ap-south-1` with public/private subnet tiers, route tables, and Internet Gateway.
+- Defense-in-depth Security Groups isolating ALB, EC2 compute, and RDS PostgreSQL 16.
+- Secure credential management using AWS Secrets Manager to generate and inject database master secrets.
+- Encrypted AWS S3 bucket with KMS encryption for invoice archives and vehicle images.
+- Automated `cloud-init` user-data script bootstrapping Docker and host prerequisites on Ubuntu 24.04 LTS.
+
+### 4. ⚙️ Configuration Management (`ansible/` & `puppet/`)
+- Modular **Ansible** playbooks and roles (`docker`, `app`) automating host provisioning, package installation, environment variable templating (`env.j2`), and health probes.
+- **Puppet** declarative manifest (`puppet/manifests/site.pp`) enforcing baseline system packages, user groups, firewall rules, and container service states.
+
+### 5. ☸️ Kubernetes & Helm Orchestration (`k8s/` & `helm/`)
+- Production Kubernetes manifests in `k8s/` with dedicated namespace, configmaps, secrets, persistent volume claims, rolling update deployments, liveness/readiness probes, and an Nginx Ingress Controller.
+- **Horizontal Pod Autoscaling (HPA)** configured for the Spring Boot backend, automatically scaling from 2 to 6 replicas based on CPU (75%) and Memory (80%) thresholds.
+- Reusable, production-grade **Helm Chart** (`helm/vehiclesphere/`) validated with `helm lint` and parameterized via `values.yaml`.
+
+### 6. 📊 Full Observability & Monitoring (`monitoring/`)
+- **Prometheus TSDB:** Scrapes Spring Boot Micrometer metrics (`/actuator/prometheus`), cAdvisor, and Node Exporter.
+- **Prometheus Alerting Rules:** Out-of-the-box alerts for service downtime (`VehicleSphereBackendDown`), high 5xx error rates (>5%), p95 latency spikes (>1.5s), JVM heap memory exhaustion (>85%), and HikariCP connection starvation.
+- **Alertmanager:** Deduplicates and routes critical and warning alerts with webhook receivers.
+- **Grafana Observability Dashboard:** Pre-provisioned dashboards visualizing active requests, response latency, JVM heap/non-heap memory, CPU usage, and HikariCP database connection pool metrics.
+- **Loki & Promtail:** Centralized log aggregation capturing container stdout/stderr logs and correlating them in Grafana.
+
+---
+
+## 🌟 Advanced Business Features Overview
 
 ### 1. 💳 Razorpay Payment Gateway (Test Mode)
 - **Backend Order Creation:** Securely calculates payable amounts in paise on the backend (`totalAmount * 100`) and generates orders using the Razorpay Java SDK.
@@ -108,9 +161,10 @@ VehicleSphere offers an exclusive luxury celebration fleet across major North In
 - **Security:** Spring Security 6, Stateless JWT (JSON Web Tokens), BCrypt password hashing
 - **Payments:** Razorpay Java SDK 1.4.6
 - **PDF Generation:** OpenPDF 1.3.39
+- **Metrics & Observability:** Spring Boot Actuator, Micrometer Prometheus Registry
 - **Email:** Spring Boot Starter Mail with asynchronous background dispatching (`@Async`)
 - **Validation:** Jakarta Bean Validation (Hibernate Validator)
-- **Database Migrations:** Flyway 10 (V1 schema, V2 advanced features)
+- **Database Migrations:** Flyway 10 (`V1__init_schema.sql`, `V2__advanced_features.sql`)
 - **API Documentation:** Springdoc OpenAPI 2.6.0 with Swagger UI
 - **Build Tool:** Apache Maven 3.9+
 
@@ -124,64 +178,91 @@ VehicleSphere offers an exclusive luxury celebration fleet across major North In
 - **Icons:** Lucide React
 
 ### Database
-- **Database Engine:** PostgreSQL 17 / 16 / 15
-- **Flyway Migrations:** 
-  - `V1__init_schema.sql` (Users, Categories, Vehicles, Bookings)
-  - `V2__advanced_features.sql` (Payments, Reviews, Wishlists, payment_status column)
+- **Engine:** PostgreSQL 17 / 16
+- **Migrations:** Flyway version-controlled migrations
+
+### DevOps, Cloud & Observability
+- **Containers:** Docker, Multi-Stage Dockerfiles, Docker Compose v2
+- **CI/CD:** Jenkins Declarative Pipeline, Trivy Container Security Scanner
+- **Infrastructure as Code:** HashiCorp Terraform (AWS VPC, Subnets, Security Groups, RDS, Secrets Manager, EC2, S3)
+- **Configuration Management:** Ansible Playbooks, Puppet Manifests
+- **Orchestration:** Kubernetes 1.30+ Manifests, Horizontal Pod Autoscaler (HPA), Helm 3 Chart
+- **Observability:** Prometheus, Grafana, Loki, Alertmanager, Promtail, Node Exporter
 
 ---
 
-## 🏃 Running the Project Locally
+## 🏃 Quick Start Guide
 
-### 1. Prerequisites
-- **Java 21 JDK**
-- **Node.js 18+ and npm**
-- **PostgreSQL 15+**
-- **Maven 3.8+**
-
-### 2. Database Setup
+### 1. Run Everything with Docker Compose (Recommended)
 ```bash
-createdb vehiclesphere
+# 1. Clone repository & configure environment variables
+git clone https://github.com/tejasvijain09/VehicleSphere.git
+cd VehicleSphere
+cp .env.example .env
+
+# 2. Start Application Stack (PostgreSQL, Backend, Frontend, Nginx Reverse Proxy)
+docker compose up -d --build
+
+# 3. Access Web Application:
+# http://localhost (via Nginx Edge Proxy) or http://localhost:5173
 ```
 
-### 3. Backend Execution
+### 2. Start Observability & Monitoring Stack
 ```bash
+# Layer Prometheus, Grafana, Alertmanager, Loki, Promtail onto the stack:
+docker compose -f docker-compose.yml -f monitoring/docker-compose.monitoring.yml up -d
+
+# Open Grafana: http://localhost:3000 (Credentials: admin / admin)
+# Open Prometheus: http://localhost:9090
+```
+
+### 3. Deploy to Kubernetes with Helm
+```bash
+# Validate chart
+helm lint helm/vehiclesphere
+
+# Deploy to cluster
+helm install vehiclesphere helm/vehiclesphere --namespace vehiclesphere --create-namespace
+```
+
+### 4. Running Backend & Frontend for Local Development
+```bash
+# Backend (Java 21):
 cd backend
-mvn clean package -DskipTests
-java -jar target/vehiclesphere-backend-1.0.0.jar
-```
-Backend starts on `http://localhost:8080`.
+mvn clean spring-boot:run
 
-### 4. Frontend Execution
-```bash
+# Frontend (Node 18+):
 cd frontend
 npm install
 npm run dev
 ```
-Frontend starts on `http://localhost:5173`.
 
 ---
 
-## 📋 Demonstration Walkthrough (For College Viva)
+## 📋 Viva Demonstration Walkthrough
 
-1. **Customer Booking & Razorpay Payment:**
+1. **Verify Cloud Health & Metrics:**
+   - Open [http://localhost:8080/actuator/health](http://localhost:8080/actuator/health) showing `UP` status with liveness, readiness, and PostgreSQL DB probes.
+   - Open [http://localhost:8080/actuator/prometheus](http://localhost:8080/actuator/prometheus) showing real-time Micrometer JVM & HTTP metrics.
+   - Open Grafana at [http://localhost:3000](http://localhost:3000) to demonstrate active request rates, p95 latency, and HikariCP connection pool health.
+2. **Customer Booking & Razorpay Payment:**
    - Log in as Customer `gurpreet.singh@example.com` (password: `Customer@123`).
-   - Browse fleet, select a vehicle (e.g. *Mercedes S-Class*), and reserve celebration dates.
+   - Browse fleet, select a vehicle (e.g. *Rolls-Royce Phantom VIII* or *Mercedes S-Class*), and reserve celebration dates.
    - Go to **My Bookings**, notice the **UNPAID** badge, and click **Pay with Razorpay**.
    - Complete authorization in the modal ➔ Booking status automatically transitions to **CONFIRMED** and payment status becomes **PAID**.
-2. **Download GST Tax Invoice:**
+3. **Download GST Tax Invoice:**
    - In **My Bookings**, click **Tax Invoice** on any confirmed/completed booking.
    - Observe the instantly downloaded branded PDF containing customer details, invoice numbers, breakdown, and payment transaction reference.
-3. **Wishlist Management:**
+4. **Wishlist Management:**
    - Click the heart icon on any vehicle card to save it.
    - Navigate to **Wishlist** from the top bar to inspect your saved celebration collection.
-4. **Customer Review Submission:**
+5. **Customer Review Submission:**
    - On completed booking records, click **Review Vehicle**.
    - Submit a 5-star rating with personal feedback.
    - Visit the vehicle's details page to observe the newly updated average rating and customer review card.
-5. **Admin Analytics & Management:**
+6. **Admin Analytics & Management:**
    - Log in as Admin `admin@vehiclesphere.com` (password: `Admin@123`).
    - Inspect the **Admin Dashboard** showing paid revenue (strictly aggregated from successful payments), monthly revenue trends, status distribution, and top rented vehicles.
    - Navigate to **Vehicles**, click **Add Vehicle** or **Edit**, and test the **Live Photo Preview** and **Upload Image** features.
-6. **API Documentation:**
+7. **Interactive API Documentation:**
    - Open [http://localhost:8080/swagger-ui/index.html](http://localhost:8080/swagger-ui/index.html) to demonstrate all 25+ secured endpoints and interactive documentation.

@@ -1,0 +1,72 @@
+---
+# =============================================================================
+# VehicleSphere — Ansible Role: Application Deployment & Health Verification
+# =============================================================================
+
+- name: Create application root directory
+  file:
+    path: "{{ project_root }}"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0755'
+
+- name: Create nginx configuration directory
+  file:
+    path: "{{ project_root }}/nginx"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0755'
+
+- name: Deploy docker-compose stack definition
+  copy:
+    src: ../../../docker-compose.yml
+    dest: "{{ project_root }}/docker-compose.yml"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0644'
+
+- name: Deploy Nginx reverse proxy configuration
+  copy:
+    src: ../../../nginx/nginx.conf
+    dest: "{{ project_root }}/nginx/nginx.conf"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0644'
+
+- name: Deploy production environment configuration
+  template:
+    src: env.j2
+    dest: "{{ project_root }}/.env"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0600'
+
+- name: Launch or update multi-container stack via Docker Compose
+  command: docker compose up -d --remove-orphans
+  args:
+    chdir: "{{ project_root }}"
+  become: false
+
+- name: Wait for Nginx gateway health check (HTTP 200)
+  uri:
+    url: http://localhost/nginx-health
+    status_code: 200
+  register: nginx_result
+  until: nginx_result.status == 200
+  retries: 15
+  delay: 4
+
+- name: Wait for Spring Boot backend Actuator health check (HTTP 200)
+  uri:
+    url: http://localhost:8080/actuator/health/liveness
+    status_code: 200
+  register: backend_result
+  until: backend_result.status == 200
+  retries: 20
+  delay: 5
+
+- name: Display deployment success summary
+  debug:
+    msg: "VehicleSphere application stack successfully deployed and healthy on {{ inventory_hostname }}."

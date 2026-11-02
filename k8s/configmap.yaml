@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vehiclesphere-config
+  namespace: vehiclesphere
+  labels:
+    app.kubernetes.io/name: vehiclesphere
+data:
+  SPRING_PROFILES_ACTIVE: "prod"
+  SERVER_PORT: "8080"
+  DB_HOST: "postgres-service"
+  DB_PORT: "5432"
+  DB_NAME: "vehiclesphere"
+  DB_USERNAME: "vehiclesphere"
+  CORS_ORIGINS: "http://vehiclesphere.local,http://localhost"
+  MAIL_ENABLED: "false"
+  VITE_API_URL: "/api/v1"

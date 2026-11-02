@@ -1,0 +1,15 @@
+apiVersion: v2
+name: vehiclesphere
+description: Production Helm chart for VehicleSphere Cloud-Native Vehicle Rental Platform
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - vehiclesphere
+  - vehicle-rental
+  - spring-boot
+  - react
+  - devops
+maintainers:
+  - name: Tejasvi
+    email: tejasvijain09@gmail.com

@@ -1,0 +1,25 @@
+# =============================================================================
+# VehicleSphere — Terraform Variable Values Template (terraform.tfvars.example)
+# =============================================================================
+# Copy this file to terraform.tfvars: cp terraform.tfvars.example terraform.tfvars
+# NEVER commit the actual terraform.tfvars file containing secrets to version control.
+# =============================================================================
+
+aws_region         = "ap-south-1"
+environment        = "prod"
+project_name       = "vehiclesphere"
+
+vpc_cidr           = "10.0.0.0/16"
+availability_zones = ["ap-south-1a", "ap-south-1b"]
+
+public_subnet_cidrs   = ["10.0.1.0/24", "10.0.2.0/24"]
+private_subnet_cidrs  = ["10.0.10.0/24", "10.0.11.0/24"]
+database_subnet_cidrs = ["10.0.20.0/24", "10.0.21.0/24"]
+
+instance_type        = "t3.medium"
+db_instance_class    = "db.t4g.micro"
+db_allocated_storage = 20
+db_name              = "vehiclesphere"
+db_username          = "vehiclesphere_admin"
+
+ssh_key_name         = "vehiclesphere-key"

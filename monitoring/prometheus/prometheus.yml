@@ -1,0 +1,57 @@
+# =============================================================================
+# VehicleSphere — Prometheus Configuration
+# =============================================================================
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  scrape_timeout: 10s
+  external_labels:
+    environment: "production"
+    project: "vehiclesphere"
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - "alertmanager:9093"
+
+# Rule files for alerts
+rule_files:
+  - "/etc/prometheus/alert_rules.yml"
+
+# Scrape targets
+scrape_configs:
+  # Self-monitoring
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  # VehicleSphere Spring Boot Backend (Micrometer Prometheus Actuator)
+  - job_name: "vehiclesphere-backend"
+    metrics_path: "/actuator/prometheus"
+    scrape_interval: 10s
+    static_configs:
+      - targets: ["backend:8080"]
+        labels:
+          application: "vehiclesphere-backend"
+          tier: "backend"
+
+  # Host Metrics (Node Exporter)
+  - job_name: "node-exporter"
+    scrape_interval: 15s
+    static_configs:
+      - targets: ["node-exporter:9100"]
+        labels:
+          application: "host-metrics"
+          tier: "infrastructure"
+
+  # Container Metrics (cAdvisor)
+  - job_name: "cadvisor"
+    scrape_interval: 15s
+    static_configs:
+      - targets: ["cadvisor:8080"]
+        labels:
+          application: "container-metrics"
+          tier: "infrastructure"

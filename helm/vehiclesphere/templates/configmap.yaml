@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "vehiclesphere.fullname" . }}-config
+  labels:
+    {{- include "vehiclesphere.labels" . | nindent 4 }}
+data:
+  SPRING_PROFILES_ACTIVE: {{ .Values.global.environment | quote }}
+  SERVER_PORT: {{ .Values.backend.service.port | quote }}
+  DB_HOST: {{ include "vehiclesphere.fullname" . }}-postgres
+  DB_PORT: "5432"
+  DB_NAME: {{ .Values.postgresql.auth.database | quote }}
+  DB_USERNAME: {{ .Values.postgresql.auth.username | quote }}
+  CORS_ORIGINS: "http://vehiclesphere.local,http://localhost"
+  MAIL_ENABLED: "false"
+  VITE_API_URL: "/api/v1"

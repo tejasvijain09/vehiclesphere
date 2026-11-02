@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: vehiclesphere
+  labels:
+    app.kubernetes.io/name: vehiclesphere
+    app.kubernetes.io/part-of: vehiclesphere-platform

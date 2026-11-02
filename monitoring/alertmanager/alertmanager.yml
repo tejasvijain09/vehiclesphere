@@ -1,0 +1,45 @@
+# =============================================================================
+# VehicleSphere — Alertmanager Configuration
+# =============================================================================
+
+global:
+  resolve_timeout: 5m
+
+# Alert routing tree
+route:
+  group_by: ["alertname", "cluster", "service"]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  receiver: "devops-notifications"
+  routes:
+    # Critical alerts route immediately to on-call receiver
+    - match:
+        severity: critical
+      receiver: "devops-critical"
+      repeat_interval: 1h
+    # Warning alerts route with standard cadence
+    - match:
+        severity: warning
+      receiver: "devops-notifications"
+      repeat_interval: 4h
+
+# Receivers configuration
+receivers:
+  - name: "devops-notifications"
+    webhook_configs:
+      - url: "http://localhost:5001/alerts"
+        send_resolved: true
+
+  - name: "devops-critical"
+    webhook_configs:
+      - url: "http://localhost:5001/alerts/critical"
+        send_resolved: true
+
+# Inhibit warning if critical is already firing for same alertname and service
+inhibit_rules:
+  - source_match:
+      severity: "critical"
+    target_match:
+      severity: "warning"
+    equal: ["alertname", "service"]

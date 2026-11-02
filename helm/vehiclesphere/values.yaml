@@ -1,0 +1,104 @@
+# =============================================================================
+# VehicleSphere — Helm Default Values
+# =============================================================================
+
+global:
+  environment: prod
+
+# --- Backend Application Configuration ---
+backend:
+  replicaCount: 2
+  image:
+    repository: docker.io/tejasvijain09/vehiclesphere-backend
+    pullPolicy: IfNotPresent
+    tag: "1.0.0"
+  service:
+    type: ClusterIP
+    port: 8080
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1024Mi
+    requests:
+      cpu: 300m
+      memory: 512Mi
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 6
+    targetCPUUtilizationPercentage: 75
+    targetMemoryUtilizationPercentage: 80
+
+# --- Frontend Application Configuration ---
+frontend:
+  replicaCount: 2
+  image:
+    repository: docker.io/tejasvijain09/vehiclesphere-frontend
+    pullPolicy: IfNotPresent
+    tag: "1.0.0"
+  service:
+    type: ClusterIP
+    port: 80
+  resources:
+    limits:
+      cpu: 500m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 64Mi
+
+# --- Database (PostgreSQL) Configuration ---
+postgresql:
+  enabled: true
+  image:
+    repository: postgres
+    tag: "17-alpine"
+  persistence:
+    enabled: true
+    size: 10Gi
+  auth:
+    database: vehiclesphere
+    username: vehiclesphere
+    password: "changeThisToAVerySecureProductionDbPassword123"
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+
+# --- Ingress Controller Configuration ---
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "20m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+  hosts:
+    - host: vehiclesphere.local
+      paths:
+        - path: /api/
+          pathType: Prefix
+          service: backend
+        - path: /actuator/
+          pathType: Prefix
+          service: backend
+        - path: /swagger-ui
+          pathType: Prefix
+          service: backend
+        - path: /v3/api-docs
+          pathType: Prefix
+          service: backend
+        - path: /
+          pathType: Prefix
+          service: frontend
+  tls: []
+
+# --- Application Secrets ---
+secrets:
+  jwtSecret: "changeThisToAVeryLongAndSecureRandomSecretKeyForProductionUse2024VehicleSphereVehicleSphereSecureToken"
+  razorpayKeyId: "rzp_test_VehicleSphereMock"
+  razorpayKeySecret: "MockSecretKeyVehicleSphereTest123"
