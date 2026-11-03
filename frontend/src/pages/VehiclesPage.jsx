@@ -31,7 +31,8 @@ export default function VehiclesPage() {
         if (catIdParam) {
           setCategoryId(catIdParam);
         } else if (catNameParam) {
-          const matched = res.data.find(
+          const catList = Array.isArray(res?.data) ? res.data : [];
+          const matched = catList.find(
             (c) => c.name.toLowerCase() === catNameParam.toLowerCase()
           );
           if (matched) {
@@ -46,7 +47,10 @@ export default function VehiclesPage() {
   useEffect(() => {
     if (user) {
       api.get('/wishlist')
-        .then((res) => setWishlistIds(new Set(res.data.map((v) => v.id))))
+        .then((res) => {
+          const list = Array.isArray(res?.data) ? res.data : [];
+          setWishlistIds(new Set(list.map((v) => v.id)));
+        })
         .catch(() => {});
     } else {
       setWishlistIds(new Set());

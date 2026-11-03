@@ -32,8 +32,8 @@ export default function HomePage() {
           api.get('/vehicles?availableOnly=true'),
           api.get('/categories')
         ]);
-        setFeaturedVehicles(vehiclesRes.data.slice(0, 6));
-        setCategories(catsRes.data);
+        setFeaturedVehicles(Array.isArray(vehiclesRes?.data) ? vehiclesRes.data.slice(0, 6) : []);
+        setCategories(Array.isArray(catsRes?.data) ? catsRes.data : []);
       } catch (err) {
         console.error('Failed to load homepage data', err);
       } finally {
