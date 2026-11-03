@@ -47,15 +47,6 @@ scrape_configs:
           application: "host-metrics"
           tier: "infrastructure"
 
-  # Container Metrics (cAdvisor)
-  - job_name: "cadvisor"
-    scrape_interval: 15s
-    static_configs:
-      - targets: ["cadvisor:8080"]
-        labels:
-          application: "container-metrics"
-          tier: "infrastructure"
-
   # OpenTelemetry Collector Metrics (OTLP Pipeline)
   - job_name: "otel-collector"
     scrape_interval: 15s

@@ -17,11 +17,11 @@ services:
     ports:
       - "9090:9090"
     volumes:
-      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - ./prometheus/alert_rules.yml:/etc/prometheus/alert_rules.yml:ro
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/prometheus/alert_rules.yml:/etc/prometheus/alert_rules.yml:ro
       - prometheus_data:/prometheus
     networks:
-      - vehiclesphere-net
+      - vehiclesphere-network
 
   alertmanager:
     image: prom/alertmanager:v0.27.0
@@ -33,10 +33,10 @@ services:
     ports:
       - "9093:9093"
     volumes:
-      - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - ./monitoring/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
       - alertmanager_data:/alertmanager
     networks:
-      - vehiclesphere-net
+      - vehiclesphere-network
 
   grafana:
     image: grafana/grafana:11.2.0
@@ -50,28 +50,29 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
-      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
-      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - ./monitoring/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./monitoring/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
       - grafana_data:/var/lib/grafana
     depends_on:
       - prometheus
       - loki
     networks:
-      - vehiclesphere-net
+      - vehiclesphere-network
 
   loki:
     image: grafana/loki:3.1.1
     container_name: vehiclesphere-loki
     restart: unless-stopped
+    user: "0:0"
     command: -config.file=/etc/loki/local-config.yaml
     ports:
       - "3100:3100"
     volumes:
-      - ./loki/loki-config.yml:/etc/loki/local-config.yaml:ro
+      - ./monitoring/loki/loki-config.yml:/etc/loki/local-config.yaml:ro
       - loki_data:/tmp/loki
     networks:
-      - vehiclesphere-net
+      - vehiclesphere-network
 
   promtail:
     image: grafana/promtail:3.1.1
@@ -79,13 +80,13 @@ services:
     restart: unless-stopped
     command: -config.file=/etc/promtail/config.yml
     volumes:
-      - ./promtail/promtail-config.yml:/etc/promtail/config.yml:ro
+      - ./monitoring/promtail/promtail-config.yml:/etc/promtail/config.yml:ro
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
     depends_on:
       - loki
     networks:
-      - vehiclesphere-net
+      - vehiclesphere-network
 
   node-exporter:
     image: prom/node-exporter:v1.8.2
@@ -94,7 +95,7 @@ services:
     ports:
       - "9100:9100"
     networks:
-      - vehiclesphere-net
+      - vehiclesphere-network
 
   otel-collector:
     image: otel/opentelemetry-collector-contrib:0.108.0
@@ -102,14 +103,14 @@ services:
     restart: unless-stopped
     command: ["--config=/etc/otel-collector-config.yml"]
     volumes:
-      - ./otel/otel-collector-config.yml:/etc/otel-collector-config.yml:ro
+      - ./monitoring/otel/otel-collector-config.yml:/etc/otel-collector-config.yml:ro
     ports:
       - "4317:4317" # OTLP gRPC receiver
       - "4318:4318" # OTLP HTTP receiver
       - "8888:8888" # Collector internal metrics
       - "8889:8889" # Prometheus exporter metrics
     networks:
-      - vehiclesphere-net
+      - vehiclesphere-network
 
 volumes:
   prometheus_data:
@@ -118,5 +119,6 @@ volumes:
   loki_data:
 
 networks:
-  vehiclesphere-net:
+  vehiclesphere-network:
     external: true
+    name: vehiclesphere-network
