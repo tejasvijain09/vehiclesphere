@@ -26,7 +26,7 @@ app:
     secret: ${JWT_SECRET:changeThisToAVeryLongAndSecureRandomSecretKeyForProductionUse2024VehicleSphereVehicleSphereSecureToken}
     expiration-ms: ${JWT_EXPIRATION:86400000}
   cors:
-    allowed-origins: ${CORS_ORIGINS:http://localhost:5173,http://localhost:3000}
+    allowed-origins: ${CORS_ORIGINS:http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173,http://127.0.0.1:3000,http://localhost,http://127.0.0.1}
   razorpay:
     key-id: ${RAZORPAY_KEY_ID:rzp_test_VehicleSphereMock}
     key-secret: ${RAZORPAY_KEY_SECRET:VehicleSphereRazorpayTestSecret2024}
