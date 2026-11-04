@@ -53,7 +53,7 @@ variable "database_subnet_cidrs" {
 variable "instance_type" {
   description = "EC2 compute instance type for application hosting"
   type        = string
-  default     = "t3.medium"
+  default     = "t3.small"
 }
 
 variable "db_instance_class" {
