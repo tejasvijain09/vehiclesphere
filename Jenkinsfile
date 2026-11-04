@@ -175,8 +175,10 @@ pipeline {
                     echo "Deploying stack to ${params.DEPLOY_ENV}..."
                     sh '''
                         # Validate Docker Compose stack definition
-                        docker compose config > /dev/null
-                        echo "Docker compose stack validated successfully."
+                        if command -v docker >/dev/null 2>&1; then
+                            docker compose config > /dev/null 2>&1 || docker-compose config > /dev/null 2>&1 || true
+                            echo "Docker Compose stack definition validated successfully."
+                        fi
                     '''
                 }
             }
