@@ -289,7 +289,7 @@ resource "aws_db_instance" "postgres" {
   vpc_security_group_ids  = [aws_security_group.db.id]
   publicly_accessible     = false
   skip_final_snapshot     = true
-  backup_retention_period = 7
+  backup_retention_period = 0
   deletion_protection     = false
 
   tags = {
@@ -308,7 +308,7 @@ data "aws_ami" "ubuntu" {
 
   filter {
     name   = "name"
-    values = ["ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-arm64-server-*"]
+    values = ["ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-*"]
   }
 
   filter {
