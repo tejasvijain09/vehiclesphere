@@ -1,0 +1,79 @@
+# =============================================================================
+# VehicleSphere — AWS Production Docker Compose Stack (Backed by Amazon RDS)
+# Services: Spring Boot Backend + React Frontend + Nginx Reverse Proxy
+# =============================================================================
+
+services:
+
+  # ---------------------------------------------------------------------------
+  # 1. Application Backend: Spring Boot 3 + Java 21 LTS (Amazon RDS PostgreSQL)
+  # ---------------------------------------------------------------------------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: vehiclesphere-backend
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_HOST: ${DB_HOST:-vehiclesphere-prod-pg.c7uy6aq8imv9.ap-south-1.rds.amazonaws.com}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME:-vehiclesphere}
+      DB_USERNAME: ${DB_USERNAME:-vehiclesphere_admin}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET:-404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-86400000}
+      CORS_ORIGINS: ${CORS_ORIGINS:-*}
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 35s
+    networks:
+      - vehiclesphere-network
+
+  # ---------------------------------------------------------------------------
+  # 2. Web Frontend: React 18 / Vite 5 / Tailwind CSS
+  # ---------------------------------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: vehiclesphere-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/healthz > /dev/null || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    networks:
+      - vehiclesphere-network
+
+  # ---------------------------------------------------------------------------
+  # 3. Edge Reverse Proxy & Ingress Gateway: Nginx 1.27
+  # ---------------------------------------------------------------------------
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: vehiclesphere-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
+    networks:
+      - vehiclesphere-network
+
+networks:
+  vehiclesphere-network:
+    driver: bridge
